@@ -8,7 +8,10 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "check-file-length": "node ./scripts/check-file-length.cjs",
+    "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'",
+    "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx,json,md}'"
   },
   "dependencies": {
     "@mdxeditor/editor": "^4.0.0",
@@ -25,11 +28,26 @@
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
     "husky": "^8.0.3",
     "jsdom": "^25.0.1",
+    "lint-staged": "^17.0.4",
+    "prettier": "^3.8.3",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^2.1.8"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "eslint --config .eslintrc.cjs --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }

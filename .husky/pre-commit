@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+npm run check-file-length
 npm test
+npm run build
+npx --no-install lint-staged
