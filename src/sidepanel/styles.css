@@ -516,6 +516,15 @@ button,
   margin-top: 0.2rem;
 }
 
+.visual-editor-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.visual-editor-content [data-editor-block-type='image'] {
+  max-width: 100%;
+}
+
 .visual-editor-content :not(pre) > code {
   display: inline;
   margin: 0;
