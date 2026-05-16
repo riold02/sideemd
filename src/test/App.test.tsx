@@ -1,23 +1,50 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_KEY, type AppState } from "../lib/types";
 
 vi.mock("@mdxeditor/editor", () => ({
-  MDXEditor: ({
-    markdown,
-    onChange,
-    placeholder
-  }: {
-    markdown: string;
-    onChange: (markdown: string, initialMarkdownNormalize: boolean) => void;
-    placeholder?: string;
-  }) => (
-    <textarea
-      aria-label="Visual markdown editor"
-      placeholder={placeholder}
-      defaultValue={markdown}
-      onChange={(event) => onChange(event.currentTarget.value, false)}
-    />
+  MDXEditor: forwardRef(
+    (
+      {
+        markdown,
+        onChange,
+        placeholder
+      }: {
+        markdown: string;
+        onChange: (markdown: string, initialMarkdownNormalize: boolean) => void;
+        placeholder?: string;
+      },
+      ref
+    ) => {
+      const editorRef = useRef<HTMLDivElement>(null);
+
+      useImperativeHandle(ref, () => ({
+        getMarkdown: () => editorRef.current?.textContent ?? "",
+        setMarkdown: (value: string) => {
+          if (editorRef.current) {
+            editorRef.current.textContent = value;
+          }
+        },
+        insertMarkdown: vi.fn(),
+        focus: vi.fn(),
+        getContentEditableHTML: () => editorRef.current?.innerHTML ?? "",
+        getSelectionMarkdown: () => ""
+      }));
+
+      return (
+        <div
+          ref={editorRef}
+          aria-label="Visual markdown editor"
+          contentEditable
+          data-placeholder={placeholder}
+          suppressContentEditableWarning
+          onInput={(event) => onChange(event.currentTarget.textContent ?? "", false)}
+        >
+          <p>{markdown || "Existing paragraph"}</p>
+        </div>
+      );
+    }
   ),
   codeBlockPlugin: vi.fn(() => ({})),
   codeMirrorPlugin: vi.fn(() => ({})),
@@ -71,6 +98,9 @@ describe("App editor", () => {
 
     expect(await screen.findByRole("button", { name: "Home" })).toBeInTheDocument();
     expect(screen.getByText("Notes")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search notes...")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open note actions" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Note" })).toBeInTheDocument();
     expect(screen.queryByText("Notebooks")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Visual markdown editor")).not.toBeInTheDocument();
     expect(screen.queryByText("Preview")).not.toBeInTheDocument();
@@ -83,10 +113,11 @@ describe("App editor", () => {
     const { default: App } = await import("../sidepanel/App");
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Welcome" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Open Welcome" }));
 
     const editor = await screen.findByLabelText("Visual markdown editor");
-    fireEvent.change(editor, { target: { value: "# Changed note" } });
+    editor.textContent = "# Changed note";
+    fireEvent.input(editor);
 
     await waitFor(() => {
       const state = store[STORAGE_KEY] as AppState;
@@ -101,7 +132,7 @@ describe("App editor", () => {
     const { default: App } = await import("../sidepanel/App");
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Welcome" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Open Welcome" }));
 
     expect(await screen.findByLabelText("Visual markdown editor")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Welcome" })).toBeInTheDocument();
@@ -110,5 +141,48 @@ describe("App editor", () => {
 
     expect(await screen.findByText("Notes")).toBeInTheDocument();
     expect(screen.queryByLabelText("Visual markdown editor")).not.toBeInTheDocument();
+  });
+
+  it("exposes Home utility actions from the compact menu", async () => {
+    const { chrome } = createChromeStorageMock();
+    vi.stubGlobal("chrome", chrome);
+
+    const { default: App } = await import("../sidepanel/App");
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open note actions" }));
+
+    expect(screen.getByRole("menuitem", { name: "Export" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Import" })).toBeInTheDocument();
+  });
+
+  it("keeps delete action available with an accessible icon button", async () => {
+    const { chrome } = createChromeStorageMock();
+    vi.stubGlobal("chrome", chrome);
+
+    const { default: App } = await import("../sidepanel/App");
+    render(<App />);
+
+    expect(await screen.findByRole("button", { name: "Delete Welcome" })).toBeInTheDocument();
+  });
+
+  it("inserts a selected block below the hovered editor block", async () => {
+    const { chrome, store } = createChromeStorageMock();
+    vi.stubGlobal("chrome", chrome);
+
+    const { default: App } = await import("../sidepanel/App");
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open Welcome" }));
+
+    const editor = await screen.findByLabelText("Visual markdown editor");
+    fireEvent.mouseMove(editor.querySelector("p") as Element);
+    fireEvent.click(await screen.findByRole("button", { name: "Insert block below" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Heading 2" }));
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(Object.values(state.notes).find((note) => note.title === "Welcome")?.contentMarkdown).toContain("## New heading");
+    }, { timeout: 1000 });
   });
 });

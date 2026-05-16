@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { Home } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from "react";
+import { Download, FileText, Home, MoreVertical, Plus, Search, Trash2, Upload } from "lucide-react";
 import {
   MDXEditor,
+  type MDXEditorMethods,
   codeBlockPlugin,
   codeMirrorPlugin,
   frontmatterPlugin,
@@ -47,6 +48,71 @@ const editorPlugins = [
 ];
 
 const HOME_TAB = "home";
+const BLOCK_INSERT_OPTIONS = [
+  { label: "Paragraph", markdown: "New paragraph" },
+  { label: "Heading 1", markdown: "# New heading" },
+  { label: "Heading 2", markdown: "## New heading" },
+  { label: "Bulleted list", markdown: "- New item" },
+  { label: "Numbered list", markdown: "1. New item" },
+  { label: "Task", markdown: "- [ ] New task" },
+  { label: "Quote", markdown: "> New quote" },
+  { label: "Code block", markdown: "```txt\nNew code\n```" },
+  { label: "Table", markdown: "| Column | Value |\n| --- | --- |\n| Item | Detail |" },
+  { label: "Divider", markdown: "---" }
+];
+
+interface BlockInsertTarget {
+  top: number;
+  signature: string;
+}
+
+function normalizeBlockText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function isEditableBlockElement(element: Element): boolean {
+  return ["P", "H1", "H2", "H3", "H4", "H5", "H6", "LI", "BLOCKQUOTE", "PRE", "TABLE", "HR"].includes(element.tagName);
+}
+
+function markdownLineMatchesBlock(line: string, signature: string): boolean {
+  const normalizedLine = normalizeBlockText(line.replace(/^#{1,6}\s+/, "").replace(/^>\s?/, "").replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "").replace(/^- \[[ xX]\]\s+/, ""));
+
+  return normalizedLine.length > 0 && (normalizedLine === signature || normalizedLine.includes(signature) || signature.includes(normalizedLine));
+}
+
+function insertMarkdownAfterBlock(markdown: string, signature: string, blockMarkdown: string): string {
+  const insertText = `\n\n${blockMarkdown}\n`;
+  const lines = markdown.split("\n");
+  const matchIndex = lines.findIndex((line) => markdownLineMatchesBlock(line, signature));
+
+  if (matchIndex === -1) {
+    return `${markdown.trimEnd()}${insertText}`;
+  }
+
+  const nextLines = [...lines];
+  nextLines.splice(matchIndex + 1, 0, "", blockMarkdown);
+  return nextLines.join("\n");
+}
+
+function stripMarkdown(markdown: string): string {
+  return markdown
+    .replace(/^---[\s\S]*?---/, "")
+    .replace(/```[\s\S]*?```/g, " code sample ")
+    .replace(/!\[[^\]]*]\([^)]+\)/g, "")
+    .replace(/\[([^\]]+)]\([^)]+\)/g, "$1")
+    .replace(/[`*_~>#|[\]-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function createNoteSnippet(markdown: string): string {
+  const text = stripMarkdown(markdown);
+  return text.length > 72 ? `${text.slice(0, 72).trim()}...` : text || "No content yet";
+}
+
+function formatNoteDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(value));
+}
 
 export default function App() {
   const [state, setState] = useState<AppState>(createDefaultState());
@@ -56,7 +122,13 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [activeNoteId, setActiveNoteId] = useState<string>("");
+  const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false);
   const saveTimer = useRef<number | null>(null);
+  const editorRef = useRef<MDXEditorMethods>(null);
+  const editorShellRef = useRef<HTMLDivElement>(null);
+  const [blockInsertTarget, setBlockInsertTarget] = useState<BlockInsertTarget | null>(null);
+  const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
 
   useEffect(() => {
     async function loadState() {
@@ -123,6 +195,7 @@ export default function App() {
 
     setOpenNoteIds((ids) => (ids.includes(noteId) ? ids : [...ids, noteId]));
     setSelectedNotebookId(note.notebookId);
+    setActiveNoteId(noteId);
     setActiveTab(noteId);
   }
 
@@ -160,6 +233,44 @@ export default function App() {
     });
   }
 
+  function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
+    const shell = editorShellRef.current;
+    if (!shell) {
+      return;
+    }
+
+    const targetElement = event.target instanceof Element ? event.target.closest("p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,table,hr") : null;
+    if (!targetElement || !shell.contains(targetElement) || !isEditableBlockElement(targetElement)) {
+      if (!isBlockMenuOpen) {
+        setBlockInsertTarget(null);
+      }
+      return;
+    }
+
+    const signature = normalizeBlockText(targetElement.textContent ?? targetElement.tagName.toLowerCase());
+    if (!signature) {
+      return;
+    }
+
+    const shellRect = shell.getBoundingClientRect();
+    const blockRect = targetElement.getBoundingClientRect();
+    setBlockInsertTarget({
+      top: blockRect.top - shellRect.top + blockRect.height / 2,
+      signature
+    });
+  }
+
+  function insertBlockBelowCurrentTarget(markdown: string) {
+    if (!selectedNote || !blockInsertTarget) {
+      return;
+    }
+
+    const nextMarkdown = insertMarkdownAfterBlock(selectedNote.contentMarkdown, blockInsertTarget.signature, markdown);
+    updateNote(selectedNote.id, { contentMarkdown: nextMarkdown });
+    editorRef.current?.setMarkdown(nextMarkdown);
+    setIsBlockMenuOpen(false);
+  }
+
   async function handleCreateNote() {
     const notebookId = selectedNotebookId || state.notebookOrder[0];
     if (!notebookId) {
@@ -169,6 +280,7 @@ export default function App() {
     const note = await repository.createNote(notebookId, "Untitled Note");
     patchState(await repository.getState());
     setOpenNoteIds((ids) => (ids.includes(note.id) ? ids : [...ids, note.id]));
+    setActiveNoteId(note.id);
     setActiveTab(note.id);
   }
 
@@ -213,6 +325,7 @@ export default function App() {
       setSelectedNotebookId(firstNotebookId);
       syncOpenTabs(next);
       setActiveTab(HOME_TAB);
+      setIsHomeMenuOpen(false);
       setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
@@ -257,33 +370,57 @@ export default function App() {
       {activeTab === HOME_TAB ? (
         <main className="file-browser">
           <section className="browser-column">
-            <div className="section-header">
+            <div className="home-header">
               <h2>Notes</h2>
-              <button onClick={() => void handleCreateNote()} disabled={!selectedNotebookId}>
-                + Note
-              </button>
+              <div className="home-actions">
+                <button className="primary-note-button" onClick={() => void handleCreateNote()} disabled={!selectedNotebookId}>
+                  <Plus size={16} strokeWidth={2.4} />
+                  Note
+                </button>
+                <div className="home-menu">
+                  <button className="icon-button" onClick={() => setIsHomeMenuOpen((isOpen) => !isOpen)} aria-label="Open note actions">
+                    <MoreVertical size={18} strokeWidth={2.2} />
+                  </button>
+                  {isHomeMenuOpen ? (
+                    <div className="home-menu-panel" role="menu">
+                      <button onClick={() => void handleExport()} role="menuitem">
+                        <Download size={16} strokeWidth={2.2} />
+                        Export
+                      </button>
+                      <label role="menuitem">
+                        <Upload size={16} strokeWidth={2.2} />
+                        Import
+                        <input type="file" accept="application/json" onChange={(e) => void handleImport(e)} />
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search notes..." className="search-input" />
+            <label className="search-field">
+              <Search size={17} strokeWidth={2.1} />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search notes..." className="search-input" />
+            </label>
 
             <ul className="note-list">
               {filteredNotes.map((note) => (
-                <li key={note.id} className={openNoteIds.includes(note.id) ? "active" : ""}>
-                  <button className="name" onClick={() => openNoteTab(note.id)}>
-                    {note.title}
+                <li key={note.id} className={activeNoteId === note.id ? "active" : ""}>
+                  <button className="note-row-main" onClick={() => openNoteTab(note.id)} aria-label={`Open ${note.title}`}>
+                    <FileText className="note-row-icon" size={17} strokeWidth={2.1} />
+                    <span className="note-row-copy">
+                      <span className="note-row-title">{note.title}</span>
+                      <span className="note-row-meta">
+                        {formatNoteDate(note.updatedAt)} - {createNoteSnippet(note.contentMarkdown)}
+                      </span>
+                    </span>
                   </button>
-                  <button onClick={() => void handleDeleteNote(note.id)}>Del</button>
+                  <button className="note-delete-button" onClick={() => void handleDeleteNote(note.id)} aria-label={`Delete ${note.title}`}>
+                    <Trash2 size={16} strokeWidth={2.1} />
+                  </button>
                 </li>
               ))}
             </ul>
-
-            <div className="footer-actions">
-              <button onClick={() => void handleExport()}>Export</button>
-              <label className="import-label">
-                Import
-                <input type="file" accept="application/json" onChange={(e) => void handleImport(e)} />
-              </label>
-            </div>
           </section>
         </main>
       ) : (
@@ -297,8 +434,39 @@ export default function App() {
                 placeholder="Note title"
               />
 
-              <div className="visual-editor-shell">
+              <div
+                className="visual-editor-shell"
+                ref={editorShellRef}
+                onMouseMove={handleEditorMouseMove}
+                onMouseLeave={() => {
+                  if (!isBlockMenuOpen) {
+                    setBlockInsertTarget(null);
+                  }
+                }}
+              >
+                {blockInsertTarget ? (
+                  <div className="block-insert-control" style={{ top: blockInsertTarget.top }}>
+                    <button
+                      className="block-insert-button"
+                      onClick={() => setIsBlockMenuOpen((isOpen) => !isOpen)}
+                      aria-label="Insert block below"
+                      type="button"
+                    >
+                      <Plus size={16} strokeWidth={2.3} />
+                    </button>
+                    {isBlockMenuOpen ? (
+                      <div className="block-insert-menu" role="menu">
+                        {BLOCK_INSERT_OPTIONS.map((option) => (
+                          <button key={option.label} type="button" onClick={() => insertBlockBelowCurrentTarget(option.markdown)} role="menuitem">
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
                 <MDXEditor
+                  ref={editorRef}
                   key={selectedNote.id}
                   markdown={selectedNote.contentMarkdown}
                   onChange={(markdown) => updateNote(selectedNote.id, { contentMarkdown: markdown })}
