@@ -1,4 +1,10 @@
-import { AppState, Note, Notebook, STORAGE_KEY } from './types';
+import {
+  AppState,
+  LEGACY_STORAGE_KEY,
+  Note,
+  Notebook,
+  STORAGE_KEY,
+} from './types';
 import {
   MARKDOWN_SHOWCASE_MARKDOWN,
   createDefaultState,
@@ -23,8 +29,9 @@ export interface StorageRepository {
 }
 
 interface ChromeStorageLike {
-  get: (key: string) => Promise<Record<string, unknown>>;
+  get: (keys: string | string[]) => Promise<Record<string, unknown>>;
   set: (items: Record<string, unknown>) => Promise<void>;
+  remove: (keys: string | string[]) => Promise<void>;
 }
 
 function getChromeStorage(): ChromeStorageLike {
@@ -39,8 +46,10 @@ export class ChromeStorageRepository implements StorageRepository {
   }
 
   async getState(): Promise<AppState> {
-    const data = await this.storage.get(STORAGE_KEY);
-    const state = data[STORAGE_KEY] as AppState | undefined;
+    const data = await this.storage.get([STORAGE_KEY, LEGACY_STORAGE_KEY]);
+    let state =
+      (data[STORAGE_KEY] as AppState | undefined) ??
+      (data[LEGACY_STORAGE_KEY] as AppState | undefined);
 
     if (!state) {
       const initial = createDefaultState();
@@ -49,8 +58,15 @@ export class ChromeStorageRepository implements StorageRepository {
     }
 
     const normalized = normalizeState(state);
-    if (normalized !== state) {
+    const migratedFromLegacy =
+      !data[STORAGE_KEY] && Boolean(data[LEGACY_STORAGE_KEY]);
+
+    if (normalized !== state || migratedFromLegacy) {
       await this.saveState(normalized);
+    }
+
+    if (migratedFromLegacy) {
+      await this.storage.remove(LEGACY_STORAGE_KEY);
     }
 
     return normalized;

@@ -20,7 +20,8 @@ export function normalizeState(state: AppState): AppState {
   for (const [noteId, note] of Object.entries(next.notes)) {
     if (
       note.title === 'Welcome' &&
-      note.contentMarkdown === '# MdSide\\n\\nStart taking notes.'
+      (note.contentMarkdown === '# MdSide\\n\\nStart taking notes.' ||
+        note.contentMarkdown === '# MdSide\n\nStart taking notes.')
     ) {
       next.notes[noteId] = {
         ...note,

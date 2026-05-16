@@ -1,4 +1,4 @@
-import { Home, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { TablineActions, TablineState } from '../types';
 
 interface Props {
@@ -22,11 +22,12 @@ export default function Tabline({ state, actions }: Props) {
         className={`home-tab ${activeTab === 'home' ? 'active' : ''}`}
         onClick={() => onHomeClick()}
       >
-        <Home
+        <img
           className="home-tab-icon"
-          aria-hidden="true"
-          size={17}
-          strokeWidth={2.2}
+          src="/icons/logo.svg"
+          alt=""
+          width={17}
+          height={17}
         />
         Home
       </button>

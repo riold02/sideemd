@@ -62,6 +62,8 @@ label {
 
 .home-tab-icon {
   flex: 0 0 auto;
+  display: block;
+  border-radius: 4px;
 }
 
 .home-tab.active {

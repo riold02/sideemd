@@ -1,8 +1,8 @@
-# MdSide
+# Sideemd
 
-**Markdown notebooks in your browser side panel.**
+**Side editor markdown — notebooks in your browser side panel.**
 
-MdSide is a Chrome extension that gives you a focused writing workspace without leaving the page you are on. Notes stay on your device, organized in notebooks, with rich Markdown editing and familiar export/import workflows.
+Sideemd is a Chrome extension that gives you a focused writing workspace without leaving the page you are on. Notes stay on your device, organized in notebooks, with rich Markdown editing and familiar export/import workflows.
 
 ## Features
 
@@ -25,7 +25,7 @@ MdSide is a Chrome extension that gives you a focused writing workspace without 
 
 ```bash
 git clone <repository-url>
-cd mdside
+cd sideemd
 npm install
 npm run dev
 ```
@@ -46,14 +46,14 @@ Load the `dist/` folder as an unpacked extension, or package it for distribution
 
 ## Usage
 
-1. Click the MdSide toolbar icon or use the keyboard shortcut to open the side panel.
+1. Click the Sideemd toolbar icon or use the keyboard shortcut to open the side panel.
 2. Select a notebook and open or create a note from the home view.
 3. Edit in the visual editor; use **Insert block below** on hover to add structured blocks.
 4. Use the menu to export your library as JSON or import a backup (merge or full replace).
 
 ## Data and privacy
 
-MdSide stores notebooks, notes, and editor state locally in the browser via the Chrome extension storage API. The extension does not include analytics, accounts, or cloud sync. You are responsible for backups (export) and for data if you uninstall the extension or clear browser data.
+Sideemd stores notebooks, notes, and editor state locally in the browser via the Chrome extension storage API. The extension does not include analytics, accounts, or cloud sync. You are responsible for backups (export) and for data if you uninstall the extension or clear browser data.
 
 ## Development
 
@@ -74,20 +74,20 @@ Project layout:
 
 ## License
 
-This software is **proprietary**. Use, copying, and distribution are governed by [license.md](./license.md).
+Sideemd is distributed under the **[Sideemd License 2.0](./license.md)**, a source-available license similar in spirit to the [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license). You may use, modify, and share the Software subject to restrictions on competitive hosted services and commercial extension redistribution.
 
-For commercial licensing, redistribution, or other terms beyond the default grant, contact the copyright holder.
+For broader commercial rights, contact the copyright holder.
 
 ## Third-party software
 
-MdSide is built with open-source components, including but not limited to:
+Sideemd is built with open-source components, including but not limited to:
 
 - [React](https://react.dev/) — MIT
 - [@mdxeditor/editor](https://github.com/mdx-editor/editor) — MIT
 - [Vite](https://vitejs.dev/) — MIT
 - [@crxjs/vite-plugin](https://github.com/crxjs/chrome-extension-tools) — MIT
 
-See `package-lock.json` and each dependency’s license for full terms. Third-party licenses do not grant rights to MdSide itself.
+See `package-lock.json` and each dependency’s license for full terms. Third-party licenses do not grant rights to Sideemd itself.
 
 ## Support
 

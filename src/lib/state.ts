@@ -1,7 +1,8 @@
+import { APP_NAME } from './branding';
 import { AppState, SCHEMA_VERSION } from './types';
 
 export const SEED_DATA_VERSION = 1;
-export const WELCOME_MARKDOWN = '# MdSide\n\nStart taking notes.';
+export const WELCOME_MARKDOWN = `# ${APP_NAME}\n\nStart taking notes.`;
 export const MARKDOWN_SHOWCASE_TITLE = 'Markdown Syntax Showcase';
 export const MARKDOWN_SHOWCASE_MARKDOWN = `---
 title: Markdown Syntax Showcase

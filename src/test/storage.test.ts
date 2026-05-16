@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ChromeStorageRepository } from '../lib/storage';
-import { STORAGE_KEY } from '../lib/types';
+import { LEGACY_STORAGE_KEY, STORAGE_KEY } from '../lib/types';
 import {
   MARKDOWN_SHOWCASE_MARKDOWN,
   MARKDOWN_SHOWCASE_TITLE,
@@ -12,11 +12,24 @@ import {
 function createMemoryStorage() {
   const store: Record<string, unknown> = {};
   return {
-    async get(key: string) {
-      return { [key]: store[key] };
+    store,
+    async get(keys: string | string[]) {
+      const keyList = Array.isArray(keys) ? keys : [keys];
+      const result: Record<string, unknown> = {};
+      for (const key of keyList) {
+        if (key in store) {
+          result[key] = store[key];
+        }
+      }
+      return result;
     },
     async set(items: Record<string, unknown>) {
       Object.assign(store, items);
+    },
+    async remove(keys: string | string[]) {
+      for (const key of Array.isArray(keys) ? keys : [keys]) {
+        delete store[key];
+      }
     },
   };
 }
@@ -44,6 +57,19 @@ describe('ChromeStorageRepository', () => {
         (note) => note.title === MARKDOWN_SHOWCASE_TITLE
       )?.contentMarkdown
     ).toContain('| Syntax | Example | Supported |');
+  });
+
+  it('migrates persisted state from the legacy storage key', async () => {
+    const memory = createMemoryStorage();
+    const state = createDefaultState();
+    await memory.set({ [LEGACY_STORAGE_KEY]: state });
+
+    const repo = new ChromeStorageRepository(memory);
+    const loaded = await repo.getState();
+
+    expect(loaded.notes).toEqual(state.notes);
+    expect(memory.store[STORAGE_KEY]).toBeTruthy();
+    expect(memory.store[LEGACY_STORAGE_KEY]).toBeUndefined();
   });
 
   it('normalizes old seeded welcome notes with escaped newlines', async () => {
