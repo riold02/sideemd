@@ -260,9 +260,14 @@ ul {
 }
 
 /* Restore natural list rendering inside the visual editor content */
-.visual-editor-content ul,
+.visual-editor-content ul {
+  list-style-type: disc;
+  margin: 0.8rem 0;
+  padding-left: 1.25rem;
+}
+
 .visual-editor-content ol {
-  list-style: initial;
+  list-style-type: decimal;
   margin: 0.8rem 0;
   padding-left: 1.25rem;
 }
