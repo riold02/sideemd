@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   FileText,
   Download,
@@ -8,43 +7,37 @@ import {
   Search,
   Trash2,
 } from 'lucide-react';
-import type { Note } from '../../lib/types';
+import type {
+  HomeViewActions,
+  HomeViewFormatters,
+  HomeViewState,
+} from '../types';
 
 interface Props {
-  filteredNotes: Note[];
-  activeNoteId: string;
-  openNoteTab: (id: string) => void;
-  handleCreateNote: () => Promise<void> | void;
-  handleDeleteNote: (id: string) => Promise<void> | void;
-  handleExport: () => Promise<void> | void;
-  handleImport: (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => Promise<void> | void;
-  selectedNotebookId: string;
-  isHomeMenuOpen: boolean;
-  setIsHomeMenuOpen: (v: boolean) => void;
-  search: string;
-  setSearch: (v: string) => void;
-  formatNoteDate: (v: string) => string;
-  createNoteSnippet: (md: string) => string;
+  state: HomeViewState;
+  actions: HomeViewActions;
+  formatters: HomeViewFormatters;
 }
 
-export default function HomeView({
-  filteredNotes,
-  activeNoteId,
-  openNoteTab,
-  handleCreateNote,
-  handleDeleteNote,
-  handleExport,
-  handleImport,
-  selectedNotebookId,
-  isHomeMenuOpen,
-  setIsHomeMenuOpen,
-  search,
-  setSearch,
-  formatNoteDate,
-  createNoteSnippet,
-}: Props) {
+export default function HomeView({ state, actions, formatters }: Props) {
+  const {
+    filteredNotes,
+    activeNoteId,
+    selectedNotebookId,
+    isHomeMenuOpen,
+    search,
+  } = state;
+  const {
+    openNoteTab,
+    handleCreateNote,
+    handleDeleteNote,
+    handleExport,
+    handleImport,
+    toggleHomeMenu,
+    setSearch,
+  } = actions;
+  const { formatNoteDate, createNoteSnippet } = formatters;
+
   return (
     <main className="file-browser">
       <section className="browser-column">
@@ -62,7 +55,7 @@ export default function HomeView({
             <div className="home-menu">
               <button
                 className="icon-button"
-                onClick={() => setIsHomeMenuOpen(!isHomeMenuOpen)}
+                onClick={toggleHomeMenu}
                 aria-label="Open note actions"
               >
                 <MoreVertical size={18} strokeWidth={2.2} />

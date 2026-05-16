@@ -1,4 +1,4 @@
-import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useMemo, useRef } from 'react';
 import { type MDXEditorMethods } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import { ChromeStorageRepository } from '../lib/storage';
@@ -6,18 +6,15 @@ import Tabline from './components/Tabline';
 import HomeView from './components/HomeView';
 import EditorView from './components/EditorView';
 import { BLOCK_INSERT_OPTIONS, HOME_TAB, editorPlugins } from './editorConfig';
+import { useEditorBlockInsert } from './hooks/useEditorBlockInsert';
 import { useSidepanelState } from './hooks/useSidepanelState';
-import {
-  createNoteSnippet,
-  formatNoteDate,
-  insertMarkdownAfterBlock,
-  isEditableBlockElement,
-  normalizeBlockText,
-} from './utils/markdown';
+import { createNoteSnippet, formatNoteDate } from './utils/markdown';
 
 const repository = new ChromeStorageRepository();
 
 export default function App() {
+  // Keep state local to sidepanel composition; promote to Context only if contracts
+  // must cross multiple intermediary layers with several independent consumers.
   const editorRef = useRef<MDXEditorMethods>(null);
   const editorShellRef = useRef<HTMLDivElement>(null);
   const {
@@ -45,96 +42,128 @@ export default function App() {
     handleImport,
   } = useSidepanelState(repository);
 
-  const [blockInsertTarget, setBlockInsertTarget] = useState<{
-    top: number;
-    signature: string;
-  } | null>(null);
-  const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
+  const {
+    isBlockMenuOpen,
+    setIsBlockMenuOpen,
+    blockInsertTarget,
+    handleEditorMouseMove,
+    insertBlockBelowCurrentTarget,
+  } = useEditorBlockInsert({
+    editorShellRef,
+    editorRef,
+    selectedNote,
+    updateNote,
+  });
 
-  function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
-    const shell = editorShellRef.current;
-    if (!shell) return;
-    const targetElement =
-      event.target instanceof Element
-        ? event.target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,table,hr')
-        : null;
-    if (
-      !targetElement ||
-      !shell.contains(targetElement) ||
-      !isEditableBlockElement(targetElement)
-    ) {
-      if (!isBlockMenuOpen) setBlockInsertTarget(null);
-      return;
-    }
-    const signature = normalizeBlockText(
-      targetElement.textContent ?? targetElement.tagName.toLowerCase()
-    );
-    if (!signature) return;
-    const shellRect = shell.getBoundingClientRect();
-    const blockRect = targetElement.getBoundingClientRect();
-    setBlockInsertTarget({
-      top: blockRect.top - shellRect.top + blockRect.height / 2,
-      signature,
-    });
-  }
+  const tablineState = useMemo(
+    () => ({
+      activeTab,
+      openNoteIds,
+      notesById: state.notes,
+    }),
+    [activeTab, openNoteIds, state.notes]
+  );
 
-  function insertBlockBelowCurrentTarget(markdown: string) {
-    if (!selectedNote || !blockInsertTarget) return;
-    const nextMarkdown = insertMarkdownAfterBlock(
-      selectedNote.contentMarkdown,
-      blockInsertTarget.signature,
-      markdown
-    );
-    updateNote(selectedNote.id, { contentMarkdown: nextMarkdown });
-    editorRef.current?.setMarkdown(nextMarkdown);
-    setIsBlockMenuOpen(false);
-  }
+  const tablineActions = useMemo(
+    () => ({
+      openNoteTab,
+      closeNoteTab,
+      handleCreateNote,
+      onHomeClick: () => setActiveTab(HOME_TAB),
+    }),
+    [openNoteTab, closeNoteTab, handleCreateNote, setActiveTab]
+  );
+
+  const homeViewState = useMemo(
+    () => ({
+      filteredNotes,
+      activeNoteId,
+      selectedNotebookId,
+      isHomeMenuOpen,
+      search,
+    }),
+    [filteredNotes, activeNoteId, selectedNotebookId, isHomeMenuOpen, search]
+  );
+
+  const homeViewActions = useMemo(
+    () => ({
+      openNoteTab,
+      handleCreateNote,
+      handleDeleteNote,
+      handleExport,
+      handleImport,
+      toggleHomeMenu: () => setIsHomeMenuOpen((value) => !value),
+      setSearch,
+    }),
+    [
+      openNoteTab,
+      handleCreateNote,
+      handleDeleteNote,
+      handleExport,
+      handleImport,
+      setIsHomeMenuOpen,
+      setSearch,
+    ]
+  );
+
+  const homeViewFormatters = useMemo(
+    () => ({ formatNoteDate, createNoteSnippet }),
+    []
+  );
+
+  const editorViewState = useMemo(
+    () => ({
+      selectedNote,
+      isBlockMenuOpen,
+      blockInsertTarget,
+      error,
+    }),
+    [selectedNote, isBlockMenuOpen, blockInsertTarget, error]
+  );
+
+  const editorViewActions = useMemo(
+    () => ({
+      updateNote,
+      handleEditorMouseMove,
+      setIsBlockMenuOpen,
+      insertBlockBelowCurrentTarget,
+      setError,
+    }),
+    [
+      updateNote,
+      handleEditorMouseMove,
+      setIsBlockMenuOpen,
+      insertBlockBelowCurrentTarget,
+      setError,
+    ]
+  );
+
+  const editorViewConfig = useMemo(
+    () => ({
+      editorRef,
+      editorShellRef,
+      blockInsertOptions: BLOCK_INSERT_OPTIONS,
+      editorPlugins,
+    }),
+    [editorRef, editorShellRef]
+  );
 
   if (loading) return <div className="loading">Loading notes...</div>;
 
   return (
     <div className="app-shell" data-color-mode="light">
-      <Tabline
-        activeTab={activeTab}
-        openNoteIds={openNoteIds}
-        state={state}
-        openNoteTab={openNoteTab}
-        closeNoteTab={closeNoteTab}
-        handleCreateNote={handleCreateNote}
-        onHomeClick={() => setActiveTab(HOME_TAB)}
-      />
+      <Tabline state={tablineState} actions={tablineActions} />
       {activeTab === HOME_TAB ? (
         <HomeView
-          filteredNotes={filteredNotes}
-          activeNoteId={activeNoteId}
-          openNoteTab={openNoteTab}
-          handleCreateNote={handleCreateNote}
-          handleDeleteNote={handleDeleteNote}
-          handleExport={handleExport}
-          handleImport={handleImport}
-          selectedNotebookId={selectedNotebookId}
-          isHomeMenuOpen={isHomeMenuOpen}
-          setIsHomeMenuOpen={setIsHomeMenuOpen}
-          search={search}
-          setSearch={setSearch}
-          formatNoteDate={formatNoteDate}
-          createNoteSnippet={createNoteSnippet}
+          state={homeViewState}
+          actions={homeViewActions}
+          formatters={homeViewFormatters}
         />
       ) : (
         <EditorView
-          selectedNote={selectedNote}
-          updateNote={updateNote}
-          editorRef={editorRef}
-          editorShellRef={editorShellRef}
-          handleEditorMouseMove={handleEditorMouseMove}
-          isBlockMenuOpen={isBlockMenuOpen}
-          setIsBlockMenuOpen={setIsBlockMenuOpen}
-          blockInsertTarget={blockInsertTarget}
-          insertBlockBelowCurrentTarget={insertBlockBelowCurrentTarget}
-          blockInsertOptions={BLOCK_INSERT_OPTIONS}
-          error={error}
-          setError={setError}
-          editorPlugins={editorPlugins}
+          state={editorViewState}
+          actions={editorViewActions}
+          config={editorViewConfig}
         />
       )}
     </div>

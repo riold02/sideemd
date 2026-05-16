@@ -1,46 +1,29 @@
-import React from 'react';
 import { Plus } from 'lucide-react';
-import {
-  MDXEditor,
-  type MDXEditorMethods,
-  type MDXEditorProps,
-} from '@mdxeditor/editor';
-import type { Note } from '../../lib/types';
+import { MDXEditor } from '@mdxeditor/editor';
+import type {
+  EditorViewActions,
+  EditorViewConfig,
+  EditorViewState,
+} from '../types';
 
 interface Props {
-  selectedNote: Note | null;
-  updateNote: (
-    id: string,
-    updates: Partial<Pick<Note, 'title' | 'contentMarkdown'>>
-  ) => void;
-  editorRef: React.RefObject<MDXEditorMethods>;
-  editorShellRef: React.RefObject<HTMLDivElement>;
-  handleEditorMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
-  isBlockMenuOpen: boolean;
-  setIsBlockMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  blockInsertTarget: { top: number; signature: string } | null;
-  insertBlockBelowCurrentTarget: (md: string) => void;
-  blockInsertOptions: ReadonlyArray<{ label: string; markdown: string }>;
-  error: string;
-  setError: (v: string) => void;
-  editorPlugins: NonNullable<MDXEditorProps['plugins']>;
+  state: EditorViewState;
+  actions: EditorViewActions;
+  config: EditorViewConfig;
 }
 
-export default function EditorView({
-  selectedNote,
-  updateNote,
-  editorRef,
-  editorShellRef,
-  handleEditorMouseMove,
-  isBlockMenuOpen,
-  setIsBlockMenuOpen,
-  blockInsertTarget,
-  insertBlockBelowCurrentTarget,
-  blockInsertOptions,
-  error,
-  setError,
-  editorPlugins,
-}: Props) {
+export default function EditorView({ state, actions, config }: Props) {
+  const { selectedNote, isBlockMenuOpen, blockInsertTarget, error } = state;
+  const {
+    updateNote,
+    handleEditorMouseMove,
+    setIsBlockMenuOpen,
+    insertBlockBelowCurrentTarget,
+    setError,
+  } = actions;
+  const { editorRef, editorShellRef, blockInsertOptions, editorPlugins } =
+    config;
+
   return (
     <main className="editor-area">
       {selectedNote ? (

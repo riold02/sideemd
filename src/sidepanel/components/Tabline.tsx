@@ -1,25 +1,15 @@
 import { Home } from 'lucide-react';
-import type { AppState } from '../../lib/types';
+import type { TablineActions, TablineState } from '../types';
 
 interface Props {
-  activeTab: string;
-  openNoteIds: string[];
-  state: AppState;
-  openNoteTab: (id: string) => void;
-  closeNoteTab: (id: string) => void;
-  handleCreateNote: () => Promise<void> | void;
-  onHomeClick: () => void;
+  state: TablineState;
+  actions: TablineActions;
 }
 
-export default function Tabline({
-  activeTab,
-  openNoteIds,
-  state,
-  openNoteTab,
-  closeNoteTab,
-  handleCreateNote,
-  onHomeClick,
-}: Props) {
+export default function Tabline({ state, actions }: Props) {
+  const { activeTab, openNoteIds, notesById } = state;
+  const { openNoteTab, closeNoteTab, handleCreateNote, onHomeClick } = actions;
+
   return (
     <nav className="tabline" aria-label="Open notes">
       <button
@@ -35,7 +25,7 @@ export default function Tabline({
         Home
       </button>
       {openNoteIds.map((noteId) => {
-        const note = state.notes[noteId];
+        const note = notesById[noteId];
         if (!note) return null;
         return (
           <div
