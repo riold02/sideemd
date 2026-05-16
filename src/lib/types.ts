@@ -32,4 +32,4 @@ export interface ExportPayload {
 }
 
 export const SCHEMA_VERSION = 1;
-export const STORAGE_KEY = "mdside_state";
+export const STORAGE_KEY = 'mdside_state';

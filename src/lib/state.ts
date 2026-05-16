@@ -1,8 +1,8 @@
-import { AppState, SCHEMA_VERSION } from "./types";
+import { AppState, SCHEMA_VERSION } from './types';
 
 export const SEED_DATA_VERSION = 1;
-export const WELCOME_MARKDOWN = "# MdSide\n\nStart taking notes.";
-export const MARKDOWN_SHOWCASE_TITLE = "Markdown Syntax Showcase";
+export const WELCOME_MARKDOWN = '# MdSide\n\nStart taking notes.';
+export const MARKDOWN_SHOWCASE_TITLE = 'Markdown Syntax Showcase';
 export const MARKDOWN_SHOWCASE_MARKDOWN = `---
 title: Markdown Syntax Showcase
 tags: [mock, markdown, reference]
@@ -84,7 +84,7 @@ export function nowIso(): string {
 }
 
 export function createId(prefix: string): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return `${prefix}_${crypto.randomUUID()}`;
   }
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -92,9 +92,9 @@ export function createId(prefix: string): string {
 
 export function createDefaultState(): AppState {
   const timestamp = nowIso();
-  const notebookId = createId("book");
-  const welcomeNoteId = createId("note");
-  const showcaseNoteId = createId("note");
+  const notebookId = createId('book');
+  const welcomeNoteId = createId('note');
+  const showcaseNoteId = createId('note');
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -102,10 +102,10 @@ export function createDefaultState(): AppState {
     notebooks: {
       [notebookId]: {
         id: notebookId,
-        name: "Inbox",
+        name: 'Inbox',
         createdAt: timestamp,
-        updatedAt: timestamp
-      }
+        updatedAt: timestamp,
+      },
     },
     notes: {
       [showcaseNoteId]: {
@@ -114,20 +114,20 @@ export function createDefaultState(): AppState {
         title: MARKDOWN_SHOWCASE_TITLE,
         contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
         createdAt: timestamp,
-        updatedAt: timestamp
+        updatedAt: timestamp,
       },
       [welcomeNoteId]: {
         id: welcomeNoteId,
         notebookId,
-        title: "Welcome",
+        title: 'Welcome',
         contentMarkdown: WELCOME_MARKDOWN,
         createdAt: timestamp,
-        updatedAt: timestamp
-      }
+        updatedAt: timestamp,
+      },
     },
     notebookOrder: [notebookId],
     noteOrderByNotebook: {
-      [notebookId]: [showcaseNoteId, welcomeNoteId]
-    }
+      [notebookId]: [showcaseNoteId, welcomeNoteId],
+    },
   };
 }

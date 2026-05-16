@@ -11,7 +11,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== "open-side-panel") {
+  if (command !== 'open-side-panel') {
     return;
   }
 

@@ -1,85 +1,8 @@
+import './mdxEditorMock';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEY, type AppState } from '../lib/types';
-
-vi.mock('@mdxeditor/editor', () => ({
-  MDXEditor: forwardRef(
-    (
-      {
-        markdown,
-        onChange,
-        placeholder,
-      }: {
-        markdown: string;
-        onChange: (markdown: string, initialMarkdownNormalize: boolean) => void;
-        placeholder?: string;
-      },
-      ref
-    ) => {
-      const editorRef = useRef<HTMLDivElement>(null);
-
-      useImperativeHandle(ref, () => ({
-        getMarkdown: () => editorRef.current?.textContent ?? '',
-        setMarkdown: (value: string) => {
-          if (editorRef.current) {
-            editorRef.current.textContent = value;
-          }
-        },
-        insertMarkdown: vi.fn(),
-        focus: vi.fn(),
-        getContentEditableHTML: () => editorRef.current?.innerHTML ?? '',
-        getSelectionMarkdown: () => '',
-      }));
-
-      return (
-        <div
-          ref={editorRef}
-          aria-label="Visual markdown editor"
-          contentEditable
-          data-placeholder={placeholder}
-          suppressContentEditableWarning
-          onInput={(event) =>
-            onChange(event.currentTarget.textContent ?? '', false)
-          }
-        >
-          <p>{markdown || 'Existing paragraph'}</p>
-        </div>
-      );
-    }
-  ),
-  codeBlockPlugin: vi.fn(() => ({})),
-  codeMirrorPlugin: vi.fn(() => ({})),
-  frontmatterPlugin: vi.fn(() => ({})),
-  headingsPlugin: vi.fn(() => ({})),
-  imagePlugin: vi.fn(() => ({})),
-  linkPlugin: vi.fn(() => ({})),
-  listsPlugin: vi.fn(() => ({})),
-  markdownShortcutPlugin: vi.fn(() => ({})),
-  quotePlugin: vi.fn(() => ({})),
-  tablePlugin: vi.fn(() => ({})),
-  thematicBreakPlugin: vi.fn(() => ({})),
-}));
-
-function createChromeStorageMock() {
-  const store: Record<string, unknown> = {};
-
-  return {
-    store,
-    chrome: {
-      storage: {
-        local: {
-          async get(key: string) {
-            return { [key]: store[key] };
-          },
-          async set(items: Record<string, unknown>) {
-            Object.assign(store, items);
-          },
-        },
-      },
-    },
-  };
-}
+import { createChromeStorageMock } from './chromeStorageMock';
 
 describe('App editor', () => {
   beforeEach(() => {

@@ -1,12 +1,21 @@
-import { AppState, Note, Notebook, STORAGE_KEY } from "./types";
-import { MARKDOWN_SHOWCASE_MARKDOWN, MARKDOWN_SHOWCASE_TITLE, SEED_DATA_VERSION, WELCOME_MARKDOWN, createDefaultState, createId, nowIso } from "./state";
+import { AppState, Note, Notebook, STORAGE_KEY } from './types';
+import {
+  MARKDOWN_SHOWCASE_MARKDOWN,
+  createDefaultState,
+  createId,
+  nowIso,
+} from './state';
+import { normalizeState } from './storageNormalize';
 
 export interface StorageRepository {
   getState(): Promise<AppState>;
   saveState(state: AppState): Promise<void>;
   createNotebook(name: string): Promise<Notebook>;
   createNote(notebookId: string, title?: string): Promise<Note>;
-  updateNote(noteId: string, updates: Partial<Pick<Note, "title" | "contentMarkdown" | "tags">>): Promise<Note | null>;
+  updateNote(
+    noteId: string,
+    updates: Partial<Pick<Note, 'title' | 'contentMarkdown' | 'tags'>>
+  ): Promise<Note | null>;
   deleteNote(noteId: string): Promise<void>;
   renameNotebook(notebookId: string, name: string): Promise<Notebook | null>;
   deleteNotebook(notebookId: string): Promise<void>;
@@ -20,56 +29,6 @@ interface ChromeStorageLike {
 
 function getChromeStorage(): ChromeStorageLike {
   return chrome.storage.local;
-}
-
-function normalizeState(state: AppState): AppState {
-  let changed = false;
-  const next: AppState = {
-    ...state,
-    notebooks: { ...state.notebooks },
-    notes: { ...state.notes },
-    noteOrderByNotebook: { ...state.noteOrderByNotebook }
-  };
-
-  for (const [noteId, note] of Object.entries(next.notes)) {
-    if (note.title === "Welcome" && note.contentMarkdown === "# MdSide\\n\\nStart taking notes.") {
-      next.notes[noteId] = {
-        ...note,
-        contentMarkdown: WELCOME_MARKDOWN
-      };
-      changed = true;
-    }
-  }
-
-  if ((state.seedDataVersion ?? 0) < SEED_DATA_VERSION) {
-    const hasShowcase = Object.values(next.notes).some((note) => note.title === MARKDOWN_SHOWCASE_TITLE);
-    const notebookId = next.notebookOrder[0];
-
-    if (!hasShowcase && notebookId && next.notebooks[notebookId]) {
-      const timestamp = nowIso();
-      const noteId = createId("note");
-
-      next.notes[noteId] = {
-        id: noteId,
-        notebookId,
-        title: MARKDOWN_SHOWCASE_TITLE,
-        contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-      next.noteOrderByNotebook[notebookId] = [noteId, ...(next.noteOrderByNotebook[notebookId] ?? [])];
-      next.notebooks[notebookId] = {
-        ...next.notebooks[notebookId],
-        updatedAt: timestamp
-      };
-      changed = true;
-    }
-
-    next.seedDataVersion = SEED_DATA_VERSION;
-    changed = true;
-  }
-
-  return changed ? next : state;
 }
 
 export class ChromeStorageRepository implements StorageRepository {
@@ -105,10 +64,10 @@ export class ChromeStorageRepository implements StorageRepository {
     const state = await this.getState();
     const timestamp = nowIso();
     const notebook: Notebook = {
-      id: createId("book"),
-      name: name.trim() || "Untitled Notebook",
+      id: createId('book'),
+      name: name.trim() || 'Untitled Notebook',
       createdAt: timestamp,
-      updatedAt: timestamp
+      updatedAt: timestamp,
     };
 
     state.notebooks[notebook.id] = notebook;
@@ -119,24 +78,25 @@ export class ChromeStorageRepository implements StorageRepository {
     return notebook;
   }
 
-  async createNote(notebookId: string, title = "Untitled Note"): Promise<Note> {
+  async createNote(notebookId: string, title = 'Untitled Note'): Promise<Note> {
     const state = await this.getState();
     if (!state.notebooks[notebookId]) {
-      throw new Error("Notebook not found");
+      throw new Error('Notebook not found');
     }
 
     const timestamp = nowIso();
     const note: Note = {
-      id: createId("note"),
+      id: createId('note'),
       notebookId,
-      title: title.trim() || "Untitled Note",
+      title: title.trim() || 'Untitled Note',
       contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
       createdAt: timestamp,
-      updatedAt: timestamp
+      updatedAt: timestamp,
     };
 
     state.notes[note.id] = note;
-    state.noteOrderByNotebook[notebookId] = state.noteOrderByNotebook[notebookId] ?? [];
+    state.noteOrderByNotebook[notebookId] =
+      state.noteOrderByNotebook[notebookId] ?? [];
     state.noteOrderByNotebook[notebookId].unshift(note.id);
     state.notebooks[notebookId].updatedAt = timestamp;
 
@@ -144,7 +104,10 @@ export class ChromeStorageRepository implements StorageRepository {
     return note;
   }
 
-  async updateNote(noteId: string, updates: Partial<Pick<Note, "title" | "contentMarkdown" | "tags">>): Promise<Note | null> {
+  async updateNote(
+    noteId: string,
+    updates: Partial<Pick<Note, 'title' | 'contentMarkdown' | 'tags'>>
+  ): Promise<Note | null> {
     const state = await this.getState();
     const existing = state.notes[noteId];
     if (!existing) {
@@ -154,8 +117,8 @@ export class ChromeStorageRepository implements StorageRepository {
     const next: Note = {
       ...existing,
       ...updates,
-      title: (updates.title ?? existing.title).trim() || "Untitled Note",
-      updatedAt: nowIso()
+      title: (updates.title ?? existing.title).trim() || 'Untitled Note',
+      updatedAt: nowIso(),
     };
 
     state.notes[noteId] = next;
@@ -173,12 +136,17 @@ export class ChromeStorageRepository implements StorageRepository {
     }
 
     delete state.notes[noteId];
-    state.noteOrderByNotebook[note.notebookId] = (state.noteOrderByNotebook[note.notebookId] ?? []).filter((id) => id !== noteId);
+    state.noteOrderByNotebook[note.notebookId] = (
+      state.noteOrderByNotebook[note.notebookId] ?? []
+    ).filter((id) => id !== noteId);
 
     await this.saveState(state);
   }
 
-  async renameNotebook(notebookId: string, name: string): Promise<Notebook | null> {
+  async renameNotebook(
+    notebookId: string,
+    name: string
+  ): Promise<Notebook | null> {
     const state = await this.getState();
     const notebook = state.notebooks[notebookId];
     if (!notebook) {
@@ -198,7 +166,9 @@ export class ChromeStorageRepository implements StorageRepository {
       return;
     }
 
-    const fallbackNotebookId = state.notebookOrder.find((id) => id !== notebookId);
+    const fallbackNotebookId = state.notebookOrder.find(
+      (id) => id !== notebookId
+    );
     const noteIds = state.noteOrderByNotebook[notebookId] ?? [];
 
     if (fallbackNotebookId) {
@@ -209,7 +179,8 @@ export class ChromeStorageRepository implements StorageRepository {
         }
         note.notebookId = fallbackNotebookId;
         note.updatedAt = nowIso();
-        state.noteOrderByNotebook[fallbackNotebookId] = state.noteOrderByNotebook[fallbackNotebookId] ?? [];
+        state.noteOrderByNotebook[fallbackNotebookId] =
+          state.noteOrderByNotebook[fallbackNotebookId] ?? [];
         state.noteOrderByNotebook[fallbackNotebookId].push(noteId);
       }
     } else {
@@ -241,7 +212,10 @@ export class ChromeStorageRepository implements StorageRepository {
     }
 
     return notes.filter((note) => {
-      return note.title.toLowerCase().includes(normalized) || note.contentMarkdown.toLowerCase().includes(normalized);
+      return (
+        note.title.toLowerCase().includes(normalized) ||
+        note.contentMarkdown.toLowerCase().includes(normalized)
+      );
     });
   }
 }

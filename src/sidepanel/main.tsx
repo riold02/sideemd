@@ -1,10 +1,10 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import "@mdxeditor/editor/style.css";
-import App from "./App";
-import "./styles.css";
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import '@mdxeditor/editor/style.css';
+import App from './App';
+import './styles.css';
 
-createRoot(document.getElementById("root") as HTMLElement).render(
+createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>

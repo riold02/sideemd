@@ -2,6 +2,7 @@
   "name": "mdside",
   "version": "0.1.0",
   "private": true,
+  "license": "SEE LICENSE IN license.md",
   "type": "module",
   "scripts": {
     "dev": "vite",
