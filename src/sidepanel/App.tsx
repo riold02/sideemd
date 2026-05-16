@@ -63,11 +63,12 @@ export default function App() {
     updateNote,
   });
 
-  const { selectionToolbar, applySelectionFormat } = useSelectionFormatToolbar({
-    noteId: selectedNote?.id,
-    editorShellRef,
-    editorRef,
-  });
+  const { selectionToolbar, applySelectionFormat, selectionToolbarRef } =
+    useSelectionFormatToolbar({
+      noteId: selectedNote?.id,
+      editorShellRef,
+      editorRef,
+    });
 
   const tablineState = useMemo(
     () => ({
@@ -146,6 +147,7 @@ export default function App() {
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
       applySelectionFormat,
+      selectionToolbarRef,
       setError,
     }),
     [
@@ -156,6 +158,7 @@ export default function App() {
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
       applySelectionFormat,
+      selectionToolbarRef,
       setError,
     ]
   );

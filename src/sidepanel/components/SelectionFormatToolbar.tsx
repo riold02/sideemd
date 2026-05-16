@@ -11,6 +11,7 @@ interface Props {
   left: number;
   options: readonly FormatOption[];
   onApplyFormat: (format: QuickFormat) => void;
+  toolbarRef?: (element: HTMLDivElement | null) => void;
 }
 
 export default function SelectionFormatToolbar({
@@ -18,10 +19,12 @@ export default function SelectionFormatToolbar({
   left,
   options,
   onApplyFormat,
+  toolbarRef,
 }: Props) {
   return (
     <div
       className="selection-format-toolbar"
+      ref={toolbarRef}
       style={{ top, left }}
       role="toolbar"
       aria-label="Text formatting"

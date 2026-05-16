@@ -3,8 +3,28 @@ export interface SelectionToolbarPosition {
   left: number;
 }
 
+export const SELECTION_TOOLBAR_WIDTH_FALLBACK = 268;
+const TOOLBAR_EDGE_MARGIN = 8;
+const TOOLBAR_VERTICAL_OFFSET = 10;
+
+export function clampToolbarCenterX(
+  centerX: number,
+  containerWidth: number,
+  toolbarWidth: number,
+  margin = TOOLBAR_EDGE_MARGIN
+): number {
+  const half = toolbarWidth / 2;
+  const minLeft = half + margin;
+  const maxLeft = containerWidth - half - margin;
+  if (maxLeft <= minLeft) {
+    return containerWidth / 2;
+  }
+  return Math.min(Math.max(minLeft, centerX), maxLeft);
+}
+
 export function getSelectionToolbarPosition(
-  shell: HTMLElement
+  shell: HTMLElement,
+  toolbarWidth = SELECTION_TOOLBAR_WIDTH_FALLBACK
 ): SelectionToolbarPosition | null {
   const editorContent = shell.querySelector('.visual-editor-content');
   if (!editorContent) return null;
@@ -29,7 +49,7 @@ export function getSelectionToolbarPosition(
   const anchorY = rangeRect.top - shellRect.top;
 
   return {
-    top: Math.max(8, anchorY - 10),
-    left: Math.min(Math.max(8, centerX), shellRect.width - 8),
+    top: Math.max(TOOLBAR_EDGE_MARGIN, anchorY - TOOLBAR_VERTICAL_OFFSET),
+    left: clampToolbarCenterX(centerX, shellRect.width, toolbarWidth),
   };
 }

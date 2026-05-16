@@ -29,6 +29,7 @@ export default function EditorView({ state, actions, config }: Props) {
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
     applySelectionFormat,
+    selectionToolbarRef,
     setError,
   } = actions;
   const {
@@ -74,6 +75,7 @@ export default function EditorView({ state, actions, config }: Props) {
                 left={selectionToolbar.left}
                 options={formatOptions}
                 onApplyFormat={applySelectionFormat}
+                toolbarRef={selectionToolbarRef}
               />
             ) : null}
 

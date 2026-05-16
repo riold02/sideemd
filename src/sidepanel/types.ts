@@ -63,6 +63,7 @@ export interface EditorViewActions {
   insertBlockBelowCurrentTarget: (md: string) => void;
   applyQuickFormatFromMenu: (format: QuickFormat) => void;
   applySelectionFormat: (format: QuickFormat) => void;
+  selectionToolbarRef: (element: HTMLDivElement | null) => void;
   setError: (value: string) => void;
 }
 

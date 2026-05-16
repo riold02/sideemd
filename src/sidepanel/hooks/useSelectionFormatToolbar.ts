@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type RefCallback,
+  type RefObject,
+} from 'react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
 import { applyQuickFormat, type QuickFormat } from '../utils/editorFormat';
 import {
@@ -20,14 +26,30 @@ export function useSelectionFormatToolbar({
   const [selectionToolbar, setSelectionToolbar] =
     useState<SelectionToolbarPosition | null>(null);
 
-  const syncToolbar = useCallback(() => {
-    const shell = editorShellRef.current;
-    if (!shell) {
-      setSelectionToolbar(null);
-      return;
-    }
-    setSelectionToolbar(getSelectionToolbarPosition(shell));
-  }, [editorShellRef]);
+  const updateToolbarPosition = useCallback(
+    (toolbarWidth?: number) => {
+      const shell = editorShellRef.current;
+      if (!shell) {
+        setSelectionToolbar(null);
+        return;
+      }
+      setSelectionToolbar(getSelectionToolbarPosition(shell, toolbarWidth));
+    },
+    [editorShellRef]
+  );
+
+  const syncToolbarFromSelection = useCallback(() => {
+    updateToolbarPosition();
+  }, [updateToolbarPosition]);
+
+  const selectionToolbarRef: RefCallback<HTMLDivElement> = useCallback(
+    (element) => {
+      if (!element) return;
+      const width = element.getBoundingClientRect().width;
+      if (width > 0) updateToolbarPosition(width);
+    },
+    [updateToolbarPosition]
+  );
 
   useEffect(() => {
     if (!noteId) {
@@ -35,31 +57,33 @@ export function useSelectionFormatToolbar({
       return;
     }
 
-    document.addEventListener('selectionchange', syncToolbar);
+    document.addEventListener('selectionchange', syncToolbarFromSelection);
 
     const shell = editorShellRef.current;
-    shell?.addEventListener('mouseup', syncToolbar);
-    shell?.addEventListener('keyup', syncToolbar);
+    shell?.addEventListener('mouseup', syncToolbarFromSelection);
+    shell?.addEventListener('keyup', syncToolbarFromSelection);
 
     const editorArea = shell?.closest('.editor-area');
-    editorArea?.addEventListener('scroll', syncToolbar, { passive: true });
+    editorArea?.addEventListener('scroll', syncToolbarFromSelection, {
+      passive: true,
+    });
 
     return () => {
-      document.removeEventListener('selectionchange', syncToolbar);
-      shell?.removeEventListener('mouseup', syncToolbar);
-      shell?.removeEventListener('keyup', syncToolbar);
-      editorArea?.removeEventListener('scroll', syncToolbar);
+      document.removeEventListener('selectionchange', syncToolbarFromSelection);
+      shell?.removeEventListener('mouseup', syncToolbarFromSelection);
+      shell?.removeEventListener('keyup', syncToolbarFromSelection);
+      editorArea?.removeEventListener('scroll', syncToolbarFromSelection);
     };
-  }, [noteId, editorShellRef, syncToolbar]);
+  }, [noteId, editorShellRef, syncToolbarFromSelection]);
 
   const applySelectionFormat = useCallback(
     (format: QuickFormat) => {
       if (!editorRef.current) return;
       applyQuickFormat(editorRef.current, format);
-      window.requestAnimationFrame(syncToolbar);
+      window.requestAnimationFrame(syncToolbarFromSelection);
     },
-    [editorRef, syncToolbar]
+    [editorRef, syncToolbarFromSelection]
   );
 
-  return { selectionToolbar, applySelectionFormat };
+  return { selectionToolbar, applySelectionFormat, selectionToolbarRef };
 }

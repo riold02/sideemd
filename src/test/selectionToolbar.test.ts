@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { getSelectionToolbarPosition } from '../sidepanel/utils/selectionToolbar';
+import {
+  clampToolbarCenterX,
+  getSelectionToolbarPosition,
+} from '../sidepanel/utils/selectionToolbar';
+
+describe('clampToolbarCenterX', () => {
+  it('keeps the toolbar inside the container when selection is near the left edge', () => {
+    const toolbarWidth = 260;
+    const left = clampToolbarCenterX(20, 400, toolbarWidth);
+    expect(left).toBeGreaterThanOrEqual(toolbarWidth / 2 + 8);
+  });
+
+  it('keeps the toolbar inside the container when selection is near the right edge', () => {
+    const toolbarWidth = 260;
+    const left = clampToolbarCenterX(390, 400, toolbarWidth);
+    expect(left).toBeLessThanOrEqual(400 - toolbarWidth / 2 - 8);
+  });
+});
 
 describe('getSelectionToolbarPosition', () => {
   it('returns null when selection is collapsed', () => {
