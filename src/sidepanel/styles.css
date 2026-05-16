@@ -1,0 +1,256 @@
+:root {
+  color-scheme: light;
+  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: radial-gradient(circle at top right, #f6eee2, #e9ecef 55%, #dce2e8);
+  color: #1e1f24;
+}
+
+button,
+input,
+label {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+.tabline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  border-bottom: 1px solid #c9ced6;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+  padding: 8px;
+  overflow-x: auto;
+}
+
+.home-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.home-tab-icon {
+  flex: 0 0 auto;
+}
+
+.home-tab.active {
+  background: #eef3f8;
+  font-weight: 700;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 180px;
+  min-height: 32px;
+  border: 1px solid #b9c1cc;
+  border-radius: 8px 8px 0 0;
+  background: #eef3f8;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: #fff;
+  border-bottom-color: #fff;
+}
+
+.note-tab {
+  padding: 0 4px 0 8px;
+}
+
+.tab-title,
+.tab-close,
+.plus-tab {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.tab-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.tab-close:hover {
+  background: #d8dee6;
+}
+
+.plus-tab {
+  justify-content: center;
+  min-width: 34px;
+  font-size: 18px;
+}
+
+.file-browser {
+  padding: 14px;
+  overflow: auto;
+}
+
+.browser-column {
+  min-width: 0;
+  border: 1px solid #c2cad3;
+  background: rgba(255, 255, 255, 0.87);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: calc(100vh - 78px);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0 8px;
+}
+
+h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.note-list li {
+  grid-template-columns: 1fr auto;
+}
+
+li.active .name {
+  background: #d7e6ff;
+}
+
+button,
+.import-label {
+  border: 1px solid #b9c1cc;
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.name {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-input,
+.title-input {
+  width: 100%;
+  border: 1px solid #b9c1cc;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+
+.notes-header {
+  margin-top: 12px;
+}
+
+.note-list {
+  margin-top: 8px;
+}
+
+.footer-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.import-label {
+  position: relative;
+  overflow: hidden;
+}
+
+.import-label input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.editor-area {
+  padding: 14px;
+  overflow: auto;
+  min-height: 0;
+}
+
+.visual-editor-shell {
+  margin-top: 12px;
+  border: 1px solid #c2cad3;
+  background: rgba(255, 255, 255, 0.87);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.visual-editor {
+  height: auto;
+  background: transparent;
+}
+
+.visual-editor-content {
+  min-height: 240px;
+  padding: 16px;
+  font: 15px/1.62 "Iowan Old Style", "Palatino Linotype", serif;
+}
+
+.visual-editor-content:focus {
+  outline: none;
+}
+
+.loading,
+.empty {
+  padding: 24px;
+}
+
+.error {
+  margin-top: 10px;
+  color: #9c1313;
+}
