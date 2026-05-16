@@ -29,6 +29,10 @@ export default function EditorView({ state, actions, config }: Props) {
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
     applySelectionFormat,
+    applySelectionTextColor,
+    applySelectionBackgroundColor,
+    applyTextColorFromMenu,
+    applyBackgroundColorFromMenu,
     selectionToolbarRef,
     setError,
   } = actions;
@@ -75,6 +79,8 @@ export default function EditorView({ state, actions, config }: Props) {
                 left={selectionToolbar.left}
                 options={formatOptions}
                 onApplyFormat={applySelectionFormat}
+                onTextColor={applySelectionTextColor}
+                onBackgroundColor={applySelectionBackgroundColor}
                 toolbarRef={selectionToolbarRef}
               />
             ) : null}
@@ -98,6 +104,8 @@ export default function EditorView({ state, actions, config }: Props) {
                     formatOptions={formatOptions}
                     onInsertBlock={insertBlockBelowCurrentTarget}
                     onApplyFormat={applyQuickFormatFromMenu}
+                    onTextColor={applyTextColorFromMenu}
+                    onBackgroundColor={applyBackgroundColorFromMenu}
                   />
                 ) : null}
               </div>

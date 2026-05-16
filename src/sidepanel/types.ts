@@ -62,7 +62,11 @@ export interface EditorViewActions {
   >;
   insertBlockBelowCurrentTarget: (md: string) => void;
   applyQuickFormatFromMenu: (format: QuickFormat) => void;
+  applyTextColorFromMenu: (color: string) => void;
+  applyBackgroundColorFromMenu: (color: string) => void;
   applySelectionFormat: (format: QuickFormat) => void;
+  applySelectionTextColor: (color: string) => void;
+  applySelectionBackgroundColor: (color: string) => void;
   selectionToolbarRef: (element: HTMLDivElement | null) => void;
   setError: (value: string) => void;
 }

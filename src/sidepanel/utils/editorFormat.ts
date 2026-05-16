@@ -43,3 +43,34 @@ export function applyQuickFormat(
   editor.insertMarkdown(FORMAT_MARKDOWN[format](label));
   editor.focus();
 }
+
+export function applyTextColor(editor: MDXEditorMethods, color: string): void {
+  const bridge = getFormatCommandBridge();
+  if (bridge) {
+    bridge.applyTextColor(color);
+    return;
+  }
+
+  const selection = editor.getSelectionMarkdown().trim();
+  const label = selection || 'text';
+  editor.insertMarkdown(`<span style="color: ${color}">${label}</span>`);
+  editor.focus();
+}
+
+export function applyBackgroundColor(
+  editor: MDXEditorMethods,
+  color: string
+): void {
+  const bridge = getFormatCommandBridge();
+  if (bridge) {
+    bridge.applyBackgroundColor(color);
+    return;
+  }
+
+  const selection = editor.getSelectionMarkdown().trim();
+  const label = selection || 'text';
+  editor.insertMarkdown(
+    `<span style="background-color: ${color}">${label}</span>`
+  );
+  editor.focus();
+}

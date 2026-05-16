@@ -1,4 +1,5 @@
 import type { QuickFormat } from '../utils/editorFormat';
+import TextColorPickers from './TextColorPickers';
 
 interface BlockOption {
   label: string;
@@ -19,6 +20,8 @@ interface Props {
   formatOptions: readonly FormatOption[];
   onInsertBlock: (markdown: string) => void;
   onApplyFormat: (format: QuickFormat) => void;
+  onTextColor: (color: string) => void;
+  onBackgroundColor: (color: string) => void;
 }
 
 const sectionOrder = [
@@ -33,6 +36,8 @@ export default function QuickInsertMenu({
   formatOptions,
   onInsertBlock,
   onApplyFormat,
+  onTextColor,
+  onBackgroundColor,
 }: Props) {
   const allOptions: Array<
     | { kind: 'format'; option: FormatOption }
@@ -52,6 +57,14 @@ export default function QuickInsertMenu({
         return (
           <div className="block-insert-group" key={section}>
             <div className="block-insert-group-title">{section}</div>
+            {section === 'Text Style' ? (
+              <div className="block-insert-color-row" role="none">
+                <TextColorPickers
+                  onTextColor={onTextColor}
+                  onBackgroundColor={onBackgroundColor}
+                />
+              </div>
+            ) : null}
             {options.map((entry) => (
               <button
                 key={`${entry.kind}-${entry.option.label}`}

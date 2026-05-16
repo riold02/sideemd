@@ -649,6 +649,67 @@ button,
   background: #eef3f8;
 }
 
+.selection-format-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: #d8dee6;
+}
+
+.selection-format-colors {
+  gap: 0;
+}
+
+.text-color-pickers {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.text-color-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.text-color-picker:hover {
+  background: #eef3f8;
+}
+
+.text-color-picker-icon {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  color: #1e1f24;
+  pointer-events: none;
+}
+
+.text-color-picker-icon-fill {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(30, 31, 36, 0.35);
+  border-radius: 2px;
+  background: linear-gradient(#fff3b0, #fff3b0);
+}
+
+.text-color-picker input[type='color'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.block-insert-color-row {
+  padding: 4px 9px 6px;
+}
+
 .loading,
 .empty {
   padding: 24px;

@@ -1,4 +1,5 @@
 import type { QuickFormat } from '../utils/editorFormat';
+import TextColorPickers from './TextColorPickers';
 
 interface FormatOption {
   label: string;
@@ -11,6 +12,8 @@ interface Props {
   left: number;
   options: readonly FormatOption[];
   onApplyFormat: (format: QuickFormat) => void;
+  onTextColor: (color: string) => void;
+  onBackgroundColor: (color: string) => void;
   toolbarRef?: (element: HTMLDivElement | null) => void;
 }
 
@@ -19,6 +22,8 @@ export default function SelectionFormatToolbar({
   left,
   options,
   onApplyFormat,
+  onTextColor,
+  onBackgroundColor,
   toolbarRef,
 }: Props) {
   return (
@@ -30,6 +35,12 @@ export default function SelectionFormatToolbar({
       aria-label="Text formatting"
       onMouseDown={(event) => event.preventDefault()}
     >
+      <TextColorPickers
+        className="selection-format-colors"
+        onTextColor={onTextColor}
+        onBackgroundColor={onBackgroundColor}
+      />
+      <span className="selection-format-divider" aria-hidden />
       {options.map((option) => (
         <button
           key={option.format}

@@ -16,7 +16,12 @@ import {
   isEmptyBlockSignature,
   resolveBlockInsertHover,
 } from '../utils/markdown';
-import { applyQuickFormat, type QuickFormat } from '../utils/editorFormat';
+import {
+  applyBackgroundColor,
+  applyQuickFormat,
+  applyTextColor,
+  type QuickFormat,
+} from '../utils/editorFormat';
 import { useSlashQuickMenu } from './useSlashQuickMenu';
 
 interface Params {
@@ -166,6 +171,18 @@ export function useEditorBlockInsert({
     closeQuickMenu();
   }
 
+  function applyTextColorFromMenu(color: string) {
+    if (!editorRef.current) return;
+    applyTextColor(editorRef.current, color);
+    closeQuickMenu();
+  }
+
+  function applyBackgroundColorFromMenu(color: string) {
+    if (!editorRef.current) return;
+    applyBackgroundColor(editorRef.current, color);
+    closeQuickMenu();
+  }
+
   return {
     isBlockMenuOpen,
     setIsBlockMenuOpen,
@@ -174,6 +191,8 @@ export function useEditorBlockInsert({
     handleEditorMouseMove,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
+    applyTextColorFromMenu,
+    applyBackgroundColorFromMenu,
     openQuickMenuFromElement,
     closeQuickMenu,
   };

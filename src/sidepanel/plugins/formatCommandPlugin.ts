@@ -28,6 +28,24 @@ const LEXICAL_FORMATS = new Set<TextFormatType>([
   'superscript',
 ]);
 
+function applyTextColorStyle(editor: LexicalEditor, color: string) {
+  editor.update(() => {
+    const selection = $getSelection();
+    if (!$isRangeSelection(selection) || selection.isCollapsed()) return;
+    $patchStyleText(selection, { color });
+  });
+  editor.focus();
+}
+
+function applyBackgroundColorStyle(editor: LexicalEditor, color: string) {
+  editor.update(() => {
+    const selection = $getSelection();
+    if (!$isRangeSelection(selection) || selection.isCollapsed()) return;
+    $patchStyleText(selection, { 'background-color': color });
+  });
+  editor.focus();
+}
+
 function applyBorderStyle(editor: LexicalEditor) {
   editor.update(() => {
     const selection = $getSelection();
@@ -75,6 +93,9 @@ export const formatCommandPlugin = realmPlugin({
             editor.focus();
           }
         },
+        applyTextColor: (color) => applyTextColorStyle(editor, color),
+        applyBackgroundColor: (color) =>
+          applyBackgroundColorStyle(editor, color),
       });
     });
   },

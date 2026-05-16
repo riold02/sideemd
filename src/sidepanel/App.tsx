@@ -56,6 +56,8 @@ export default function App() {
     handleEditorMouseMove,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
+    applyTextColorFromMenu,
+    applyBackgroundColorFromMenu,
   } = useEditorBlockInsert({
     editorShellRef,
     editorRef,
@@ -63,12 +65,17 @@ export default function App() {
     updateNote,
   });
 
-  const { selectionToolbar, applySelectionFormat, selectionToolbarRef } =
-    useSelectionFormatToolbar({
-      noteId: selectedNote?.id,
-      editorShellRef,
-      editorRef,
-    });
+  const {
+    selectionToolbar,
+    applySelectionFormat,
+    applySelectionTextColor,
+    applySelectionBackgroundColor,
+    selectionToolbarRef,
+  } = useSelectionFormatToolbar({
+    noteId: selectedNote?.id,
+    editorShellRef,
+    editorRef,
+  });
 
   const tablineState = useMemo(
     () => ({
@@ -147,6 +154,10 @@ export default function App() {
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
       applySelectionFormat,
+      applySelectionTextColor,
+      applySelectionBackgroundColor,
+      applyTextColorFromMenu,
+      applyBackgroundColorFromMenu,
       selectionToolbarRef,
       setError,
     }),
@@ -158,6 +169,10 @@ export default function App() {
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
       applySelectionFormat,
+      applySelectionTextColor,
+      applySelectionBackgroundColor,
+      applyTextColorFromMenu,
+      applyBackgroundColorFromMenu,
       selectionToolbarRef,
       setError,
     ]

@@ -6,7 +6,12 @@ import {
   type RefObject,
 } from 'react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
-import { applyQuickFormat, type QuickFormat } from '../utils/editorFormat';
+import {
+  applyBackgroundColor,
+  applyQuickFormat,
+  applyTextColor,
+  type QuickFormat,
+} from '../utils/editorFormat';
 import {
   getSelectionToolbarPosition,
   type SelectionToolbarPosition,
@@ -85,5 +90,29 @@ export function useSelectionFormatToolbar({
     [editorRef, syncToolbarFromSelection]
   );
 
-  return { selectionToolbar, applySelectionFormat, selectionToolbarRef };
+  const applySelectionTextColor = useCallback(
+    (color: string) => {
+      if (!editorRef.current) return;
+      applyTextColor(editorRef.current, color);
+      window.requestAnimationFrame(syncToolbarFromSelection);
+    },
+    [editorRef, syncToolbarFromSelection]
+  );
+
+  const applySelectionBackgroundColor = useCallback(
+    (color: string) => {
+      if (!editorRef.current) return;
+      applyBackgroundColor(editorRef.current, color);
+      window.requestAnimationFrame(syncToolbarFromSelection);
+    },
+    [editorRef, syncToolbarFromSelection]
+  );
+
+  return {
+    selectionToolbar,
+    applySelectionFormat,
+    applySelectionTextColor,
+    applySelectionBackgroundColor,
+    selectionToolbarRef,
+  };
 }

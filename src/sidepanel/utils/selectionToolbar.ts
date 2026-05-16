@@ -3,7 +3,7 @@ export interface SelectionToolbarPosition {
   left: number;
 }
 
-export const SELECTION_TOOLBAR_WIDTH_FALLBACK = 268;
+export const SELECTION_TOOLBAR_WIDTH_FALLBACK = 340;
 const TOOLBAR_EDGE_MARGIN = 8;
 const TOOLBAR_VERTICAL_OFFSET = 10;
 
