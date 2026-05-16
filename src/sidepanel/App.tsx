@@ -10,6 +10,7 @@ import { useEditorBlockInsert } from './hooks/useEditorBlockInsert';
 import { useEditorViewProps } from './hooks/useEditorViewProps';
 import { useSelectionFormatToolbar } from './hooks/useSelectionFormatToolbar';
 import { useSidepanelState } from './hooks/useSidepanelState';
+import { useMarkdownPaste } from './hooks/useMarkdownPaste';
 import { useWikilinkEditor } from './hooks/useWikilinkEditor';
 import { createNoteSnippet, formatNoteDate } from './utils/markdown';
 
@@ -77,6 +78,14 @@ export default function App() {
     noteId: selectedNote?.id,
     editorShellRef,
     editorRef,
+  });
+
+  useMarkdownPaste({
+    noteId: selectedNote?.id,
+    editorShellRef,
+    editorRef,
+    selectedNote,
+    updateNote,
   });
 
   const { wikilinkMenu, handleSelectWikilink, openWikilinkMenu } =

@@ -4,6 +4,7 @@ import NoteBreadcrumb from './NoteBreadcrumb';
 import QuickInsertMenu from './QuickInsertMenu';
 import SelectionFormatToolbar from './SelectionFormatToolbar';
 import WikilinkMenu from './WikilinkMenu';
+import { prepareMarkdownForEditor } from '../utils/markdown';
 import type {
   EditorViewActions,
   EditorViewConfig,
@@ -142,7 +143,7 @@ export default function EditorView({ state, actions, config }: Props) {
             <MDXEditor
               ref={editorRef}
               key={selectedNote.id}
-              markdown={selectedNote.contentMarkdown}
+              markdown={prepareMarkdownForEditor(selectedNote.contentMarkdown)}
               onChange={(markdown) => {
                 updateNote(selectedNote.id, { contentMarkdown: markdown });
                 updateTitleFromMarkdown(markdown);

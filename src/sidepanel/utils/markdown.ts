@@ -168,3 +168,42 @@ export function formatNoteDate(value: string): string {
     day: 'numeric',
   }).format(new Date(value));
 }
+
+/** Gemini / AI export markers → readable superscript citations. */
+export function normalizeCitationMarkers(markdown: string): string {
+  return markdown
+    .replace(/\[cite_start\]/gi, '')
+    .replace(/\[cite:\s*([^\]]+)\]/gi, '<sup class="cite-mark">[$1]</sup>');
+}
+
+/** Unwrap ```markdown fences so pasted blocks render instead of showing raw text. */
+export function unwrapMarkdownCodeFence(text: string): string {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```\s*$/i);
+  if (fenced) return fenced[1].trim();
+  const opened = trimmed.match(/^```(?:markdown|md)?\s*\n([\s\S]*)$/i);
+  if (opened) return opened[1].trim();
+  return text;
+}
+
+export function prepareMarkdownForEditor(markdown: string): string {
+  return normalizeCitationMarkers(unwrapMarkdownCodeFence(markdown));
+}
+
+export function looksLikeMarkdownPaste(text: string): boolean {
+  const sample = text.trim();
+  if (sample.length < 2) return false;
+
+  const signals = [
+    /^#{1,6}\s+\S/m.test(sample),
+    /^\s*[-*+]\s+\S/m.test(sample),
+    /^\s*\d+\.\s+\S/m.test(sample),
+    /\[cite_start\]/i.test(sample),
+    /\[cite:\s*[^\]]+\]/i.test(sample),
+    /```(?:markdown|md)?\s*\n/i.test(sample),
+    /\*\*[^*]+\*\*/.test(sample),
+    /^>\s+\S/m.test(sample),
+  ];
+
+  return signals.filter(Boolean).length >= 1 && sample.includes('\n');
+}

@@ -541,6 +541,15 @@ button,
   border-radius: 4px;
 }
 
+.visual-editor-content .cite-mark {
+  font-size: 0.72em;
+  color: #5a6a7d;
+  font-weight: 600;
+  vertical-align: super;
+  line-height: 0;
+  margin-left: 1px;
+}
+
 .notes-header {
   margin-top: 12px;
 }
