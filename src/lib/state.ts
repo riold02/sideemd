@@ -112,6 +112,7 @@ export function createDefaultState(): AppState {
       [showcaseNoteId]: {
         id: showcaseNoteId,
         notebookId,
+        parentNoteId: null,
         title: MARKDOWN_SHOWCASE_TITLE,
         contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
         createdAt: timestamp,
@@ -120,6 +121,7 @@ export function createDefaultState(): AppState {
       [welcomeNoteId]: {
         id: welcomeNoteId,
         notebookId,
+        parentNoteId: null,
         title: 'Welcome',
         contentMarkdown: WELCOME_MARKDOWN,
         createdAt: timestamp,
@@ -130,5 +132,6 @@ export function createDefaultState(): AppState {
     noteOrderByNotebook: {
       [notebookId]: [showcaseNoteId, welcomeNoteId],
     },
+    childOrderByNote: {},
   };
 }

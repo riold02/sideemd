@@ -22,6 +22,7 @@ interface Props {
   onApplyFormat: (format: QuickFormat) => void;
   onTextColor: (color: string) => void;
   onBackgroundColor: (color: string) => void;
+  onOpenWikilinkMenu?: () => void;
 }
 
 const sectionOrder = [
@@ -38,6 +39,7 @@ export default function QuickInsertMenu({
   onApplyFormat,
   onTextColor,
   onBackgroundColor,
+  onOpenWikilinkMenu,
 }: Props) {
   const allOptions: Array<
     | { kind: 'format'; option: FormatOption }
@@ -63,6 +65,19 @@ export default function QuickInsertMenu({
                   onTextColor={onTextColor}
                   onBackgroundColor={onBackgroundColor}
                 />
+                {onOpenWikilinkMenu ? (
+                  <button
+                    type="button"
+                    className="wikilink-menu-trigger"
+                    onClick={onOpenWikilinkMenu}
+                    role="menuitem"
+                  >
+                    <span className="block-option-icon" aria-hidden>
+                      ↗
+                    </span>
+                    Link to subnote
+                  </button>
+                ) : null}
               </div>
             ) : null}
             {options.map((entry) => (

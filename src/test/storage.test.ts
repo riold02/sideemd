@@ -138,4 +138,26 @@ describe('ChromeStorageRepository', () => {
     const persisted = await memory.get(STORAGE_KEY);
     expect(persisted[STORAGE_KEY]).toBeTruthy();
   });
+
+  it('creates subnotes and deletes the subtree', async () => {
+    const memory = createMemoryStorage();
+    const repo = new ChromeStorageRepository(memory);
+    const state = await repo.getState();
+    const rootId = state.noteOrderByNotebook[state.notebookOrder[0]][0];
+
+    const child = await repo.createSubnote(rootId, 'Child');
+    const grandchild = await repo.createSubnote(child.id, 'Grandchild');
+
+    const afterCreate = await repo.getState();
+    expect(afterCreate.notes[child.id].parentNoteId).toBe(rootId);
+    expect(afterCreate.childOrderByNote[rootId]).toContain(child.id);
+    expect(afterCreate.childOrderByNote[child.id]).toContain(grandchild.id);
+
+    await repo.deleteNote(rootId);
+
+    const afterDelete = await repo.getState();
+    expect(afterDelete.notes[rootId]).toBeUndefined();
+    expect(afterDelete.notes[child.id]).toBeUndefined();
+    expect(afterDelete.notes[grandchild.id]).toBeUndefined();
+  });
 });

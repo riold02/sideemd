@@ -1,7 +1,10 @@
 import { Plus } from 'lucide-react';
 import { MDXEditor } from '@mdxeditor/editor';
+import NoteBreadcrumb from './NoteBreadcrumb';
 import QuickInsertMenu from './QuickInsertMenu';
 import SelectionFormatToolbar from './SelectionFormatToolbar';
+import SubnotesPanel from './SubnotesPanel';
+import WikilinkMenu from './WikilinkMenu';
 import type {
   EditorViewActions,
   EditorViewConfig,
@@ -17,9 +20,12 @@ interface Props {
 export default function EditorView({ state, actions, config }: Props) {
   const {
     selectedNote,
+    noteAncestors,
+    subnotes,
     isBlockMenuOpen,
     blockInsertTarget,
     selectionToolbar,
+    wikilinkMenu,
     error,
   } = state;
   const {
@@ -34,6 +40,11 @@ export default function EditorView({ state, actions, config }: Props) {
     applyTextColorFromMenu,
     applyBackgroundColorFromMenu,
     selectionToolbarRef,
+    onHomeClick,
+    onCreateSubnote,
+    onSelectWikilink,
+    onOpenWikilinkMenu,
+    openNoteTab,
     setError,
   } = actions;
   const {
@@ -61,9 +72,18 @@ export default function EditorView({ state, actions, config }: Props) {
     <main className="editor-area">
       {selectedNote ? (
         <>
-          <div className="editor-breadcrumb" aria-label="Current note">
-            Home <span>&gt;</span> {selectedNote.title}
-          </div>
+          <NoteBreadcrumb
+            ancestors={noteAncestors}
+            currentTitle={selectedNote.title}
+            onHomeClick={onHomeClick}
+            onOpenNote={openNoteTab}
+          />
+
+          <SubnotesPanel
+            subnotes={subnotes}
+            onOpenSubnote={openNoteTab}
+            onCreateSubnote={onCreateSubnote}
+          />
 
           <div
             className="visual-editor-shell"
@@ -82,6 +102,15 @@ export default function EditorView({ state, actions, config }: Props) {
                 onTextColor={applySelectionTextColor}
                 onBackgroundColor={applySelectionBackgroundColor}
                 toolbarRef={selectionToolbarRef}
+              />
+            ) : null}
+
+            {wikilinkMenu ? (
+              <WikilinkMenu
+                top={wikilinkMenu.top}
+                left={wikilinkMenu.left}
+                options={wikilinkMenu.options}
+                onSelect={onSelectWikilink}
               />
             ) : null}
 
@@ -106,6 +135,7 @@ export default function EditorView({ state, actions, config }: Props) {
                     onApplyFormat={applyQuickFormatFromMenu}
                     onTextColor={applyTextColorFromMenu}
                     onBackgroundColor={applyBackgroundColorFromMenu}
+                    onOpenWikilinkMenu={onOpenWikilinkMenu}
                   />
                 ) : null}
               </div>
@@ -119,7 +149,7 @@ export default function EditorView({ state, actions, config }: Props) {
                 updateNote(selectedNote.id, { contentMarkdown: markdown });
                 updateTitleFromMarkdown(markdown);
               }}
-              onError={({ error }) => setError(error)}
+              onError={({ error: editorError }) => setError(editorError)}
               placeholder="Write your note..."
               plugins={editorPlugins}
               className="visual-editor"

@@ -32,7 +32,10 @@ function isNote(value: unknown): value is Note {
     typeof v.title === 'string' &&
     typeof v.contentMarkdown === 'string' &&
     typeof v.createdAt === 'string' &&
-    typeof v.updatedAt === 'string'
+    typeof v.updatedAt === 'string' &&
+    (v.parentNoteId === undefined ||
+      v.parentNoteId === null ||
+      typeof v.parentNoteId === 'string')
   );
 }
 
@@ -44,13 +47,15 @@ export function serializeState(state: AppState): ExportPayload {
       .map((id) => state.notebooks[id])
       .filter(Boolean),
     notes: Object.values(state.notes),
+    noteOrderByNotebook: state.noteOrderByNotebook,
+    childOrderByNote: state.childOrderByNote,
   };
 }
 
 export function parseImport(raw: string): ExportPayload {
   const parsed = JSON.parse(raw) as Partial<ExportPayload>;
 
-  if (parsed.schemaVersion !== SCHEMA_VERSION) {
+  if (parsed.schemaVersion !== SCHEMA_VERSION && parsed.schemaVersion !== 1) {
     throw new Error(
       `Unsupported schema version: ${String(parsed.schemaVersion)}`
     );
@@ -73,11 +78,56 @@ export function parseImport(raw: string): ExportPayload {
   }
 
   return {
-    schemaVersion: parsed.schemaVersion,
+    schemaVersion: parsed.schemaVersion ?? SCHEMA_VERSION,
     exportedAt: parsed.exportedAt ?? new Date().toISOString(),
     notebooks: parsed.notebooks,
-    notes: parsed.notes,
+    notes: parsed.notes.map((note) => ({
+      ...note,
+      parentNoteId: note.parentNoteId ?? null,
+    })),
+    noteOrderByNotebook: parsed.noteOrderByNotebook,
+    childOrderByNote: parsed.childOrderByNote,
   };
+}
+
+function importNotesIntoState(
+  next: AppState,
+  notes: Note[],
+  noteOrderByNotebook?: Record<string, string[]>,
+  childOrderByNote?: Record<string, string[]>
+) {
+  if (noteOrderByNotebook && childOrderByNote) {
+    next.noteOrderByNotebook = {
+      ...next.noteOrderByNotebook,
+      ...noteOrderByNotebook,
+    };
+    next.childOrderByNote = { ...next.childOrderByNote, ...childOrderByNote };
+    for (const note of notes) {
+      next.notes[note.id] = {
+        ...note,
+        parentNoteId: note.parentNoteId ?? null,
+      };
+    }
+    return;
+  }
+
+  for (const note of notes) {
+    const parentNoteId = note.parentNoteId ?? null;
+    next.notes[note.id] = { ...note, parentNoteId };
+    if (parentNoteId) {
+      next.childOrderByNote[parentNoteId] =
+        next.childOrderByNote[parentNoteId] ?? [];
+      if (!next.childOrderByNote[parentNoteId].includes(note.id)) {
+        next.childOrderByNote[parentNoteId].push(note.id);
+      }
+    } else {
+      const order = next.noteOrderByNotebook[note.notebookId] ?? [];
+      if (!order.includes(note.id)) {
+        order.push(note.id);
+      }
+      next.noteOrderByNotebook[note.notebookId] = order;
+    }
+  }
 }
 
 export function mergeImportedState(
@@ -95,14 +145,12 @@ export function mergeImportedState(
       next.noteOrderByNotebook[notebook.id] ?? [];
   }
 
-  for (const note of payload.notes) {
-    next.notes[note.id] = note;
-    const order = next.noteOrderByNotebook[note.notebookId] ?? [];
-    if (!order.includes(note.id)) {
-      order.push(note.id);
-    }
-    next.noteOrderByNotebook[note.notebookId] = order;
-  }
+  importNotesIntoState(
+    next,
+    payload.notes,
+    payload.noteOrderByNotebook,
+    payload.childOrderByNote
+  );
 
   return next;
 }
@@ -110,17 +158,10 @@ export function mergeImportedState(
 export function replaceImportedState(payload: ExportPayload): AppState {
   const notebookOrder = payload.notebooks.map((notebook) => notebook.id);
   const noteOrderByNotebook: Record<string, string[]> = {};
+  const childOrderByNote: Record<string, string[]> = {};
 
   for (const notebook of payload.notebooks) {
     noteOrderByNotebook[notebook.id] = [];
-  }
-
-  const notes: Record<string, Note> = {};
-  for (const note of payload.notes) {
-    notes[note.id] = note;
-    noteOrderByNotebook[note.notebookId] =
-      noteOrderByNotebook[note.notebookId] ?? [];
-    noteOrderByNotebook[note.notebookId].push(note.id);
   }
 
   const notebooks: Record<string, Notebook> = {};
@@ -128,11 +169,22 @@ export function replaceImportedState(payload: ExportPayload): AppState {
     notebooks[notebook.id] = notebook;
   }
 
-  return {
-    schemaVersion: payload.schemaVersion,
+  const notes: Record<string, Note> = {};
+  const base: AppState = {
+    schemaVersion: SCHEMA_VERSION,
     notebooks,
     notes,
     notebookOrder,
     noteOrderByNotebook,
+    childOrderByNote,
   };
+
+  importNotesIntoState(
+    base,
+    payload.notes,
+    payload.noteOrderByNotebook,
+    payload.childOrderByNote
+  );
+
+  return base;
 }

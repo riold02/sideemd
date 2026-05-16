@@ -5,22 +5,17 @@ import { ChromeStorageRepository } from '../lib/storage';
 import Tabline from './components/Tabline';
 import HomeView from './components/HomeView';
 import EditorView from './components/EditorView';
-import {
-  BLOCK_INSERT_OPTIONS,
-  HOME_TAB,
-  QUICK_MENU_FORMAT_OPTIONS,
-  editorPlugins,
-} from './editorConfig';
+import { HOME_TAB } from './editorConfig';
 import { useEditorBlockInsert } from './hooks/useEditorBlockInsert';
+import { useEditorViewProps } from './hooks/useEditorViewProps';
 import { useSelectionFormatToolbar } from './hooks/useSelectionFormatToolbar';
 import { useSidepanelState } from './hooks/useSidepanelState';
+import { useWikilinkEditor } from './hooks/useWikilinkEditor';
 import { createNoteSnippet, formatNoteDate } from './utils/markdown';
 
 const repository = new ChromeStorageRepository();
 
 export default function App() {
-  // Keep state local to sidepanel composition; promote to Context only if contracts
-  // must cross multiple intermediary layers with several independent consumers.
   const editorRef = useRef<MDXEditorMethods>(null);
   const editorShellRef = useRef<HTMLDivElement>(null);
   const {
@@ -43,9 +38,12 @@ export default function App() {
     closeNoteTab,
     updateNote,
     handleCreateNote,
+    handleCreateSubnote,
     handleDeleteNote,
     handleExport,
     handleImport,
+    selectedNoteAncestors,
+    selectedNoteSubnotes,
   } = useSidepanelState(repository);
 
   const {
@@ -75,6 +73,50 @@ export default function App() {
     noteId: selectedNote?.id,
     editorShellRef,
     editorRef,
+  });
+
+  const { wikilinkMenu, handleSelectWikilink, openWikilinkMenu } =
+    useWikilinkEditor({
+      noteId: selectedNote?.id,
+      editorShellRef,
+      editorRef,
+      state,
+      openNoteTab,
+      createSubnote: (title) =>
+        selectedNote
+          ? handleCreateSubnote(selectedNote.id, title)
+          : Promise.resolve(null),
+    });
+
+  const editorView = useEditorViewProps({
+    selectedNote,
+    selectedNoteAncestors,
+    selectedNoteSubnotes,
+    isBlockMenuOpen,
+    blockInsertTarget,
+    selectionToolbar,
+    wikilinkMenu,
+    error,
+    editorRef,
+    editorShellRef,
+    setActiveTab,
+    updateNote,
+    handleEditorMouseMove,
+    setIsBlockMenuOpen,
+    setBlockInsertTarget,
+    insertBlockBelowCurrentTarget,
+    applyQuickFormatFromMenu,
+    applySelectionFormat,
+    applySelectionTextColor,
+    applySelectionBackgroundColor,
+    applyTextColorFromMenu,
+    applyBackgroundColorFromMenu,
+    selectionToolbarRef,
+    handleCreateSubnote,
+    handleSelectWikilink,
+    openWikilinkMenu,
+    openNoteTab,
+    setError,
   });
 
   const tablineState = useMemo(
@@ -134,61 +176,6 @@ export default function App() {
     []
   );
 
-  const editorViewState = useMemo(
-    () => ({
-      selectedNote,
-      isBlockMenuOpen,
-      blockInsertTarget,
-      selectionToolbar,
-      error,
-    }),
-    [selectedNote, isBlockMenuOpen, blockInsertTarget, selectionToolbar, error]
-  );
-
-  const editorViewActions = useMemo(
-    () => ({
-      updateNote,
-      handleEditorMouseMove,
-      setIsBlockMenuOpen,
-      setBlockInsertTarget,
-      insertBlockBelowCurrentTarget,
-      applyQuickFormatFromMenu,
-      applySelectionFormat,
-      applySelectionTextColor,
-      applySelectionBackgroundColor,
-      applyTextColorFromMenu,
-      applyBackgroundColorFromMenu,
-      selectionToolbarRef,
-      setError,
-    }),
-    [
-      updateNote,
-      handleEditorMouseMove,
-      setIsBlockMenuOpen,
-      setBlockInsertTarget,
-      insertBlockBelowCurrentTarget,
-      applyQuickFormatFromMenu,
-      applySelectionFormat,
-      applySelectionTextColor,
-      applySelectionBackgroundColor,
-      applyTextColorFromMenu,
-      applyBackgroundColorFromMenu,
-      selectionToolbarRef,
-      setError,
-    ]
-  );
-
-  const editorViewConfig = useMemo(
-    () => ({
-      editorRef,
-      editorShellRef,
-      blockInsertOptions: BLOCK_INSERT_OPTIONS,
-      formatOptions: QUICK_MENU_FORMAT_OPTIONS,
-      editorPlugins,
-    }),
-    [editorRef, editorShellRef]
-  );
-
   if (loading) return <div className="loading">Loading notes...</div>;
 
   return (
@@ -202,9 +189,9 @@ export default function App() {
         />
       ) : (
         <EditorView
-          state={editorViewState}
-          actions={editorViewActions}
-          config={editorViewConfig}
+          state={editorView.state}
+          actions={editorView.actions}
+          config={editorView.config}
         />
       )}
     </div>

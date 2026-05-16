@@ -8,6 +8,7 @@ export interface Notebook {
 export interface Note {
   id: string;
   notebookId: string;
+  parentNoteId: string | null;
   title: string;
   contentMarkdown: string;
   tags?: string[];
@@ -21,7 +22,10 @@ export interface AppState {
   notebooks: Record<string, Notebook>;
   notes: Record<string, Note>;
   notebookOrder: string[];
+  /** Root note order per notebook (parentNoteId === null). */
   noteOrderByNotebook: Record<string, string[]>;
+  /** Direct child order per parent note. */
+  childOrderByNote: Record<string, string[]>;
 }
 
 export interface ExportPayload {
@@ -29,8 +33,10 @@ export interface ExportPayload {
   exportedAt: string;
   notebooks: Notebook[];
   notes: Note[];
+  noteOrderByNotebook?: Record<string, string[]>;
+  childOrderByNote?: Record<string, string[]>;
 }
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const STORAGE_KEY = 'sideemd_state';
 export const LEGACY_STORAGE_KEY = 'mdside_state';

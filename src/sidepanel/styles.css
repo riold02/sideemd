@@ -429,15 +429,181 @@ button,
 }
 
 .editor-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
   margin: 2px 2px 0;
   color: #788496;
   font-size: 12px;
   letter-spacing: 0.01em;
 }
 
-.editor-breadcrumb span {
-  margin: 0 5px;
+.breadcrumb-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.breadcrumb-segment > span[aria-hidden] {
   color: #99a3b2;
+}
+
+.breadcrumb-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #5a6a7d;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.breadcrumb-link:hover {
+  color: #2f3d4f;
+}
+
+.breadcrumb-current {
+  color: #1e1f24;
+  font-weight: 600;
+}
+
+.subnotes-panel {
+  margin: 10px 2px 0;
+  border: 1px solid #d5dbe3;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 10px 12px;
+}
+
+.subnotes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.subnotes-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.subnote-create-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #b9c1cc;
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.subnote-create-button:hover {
+  background: #f4f7fb;
+}
+
+.subnotes-empty {
+  margin: 8px 0 0;
+  color: #8a95a3;
+  font-size: 12px;
+}
+
+.subnotes-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.subnote-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.subnote-row:hover {
+  background: #eef3f8;
+}
+
+.subnote-row-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subnote-row-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.subnote-row-meta {
+  color: #7b8796;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wikilink-menu {
+  position: absolute;
+  z-index: 30;
+  min-width: 180px;
+  max-width: 260px;
+  border: 1px solid #c5ced8;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(24, 34, 48, 0.14);
+  padding: 6px;
+}
+
+.wikilink-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 7px 8px;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wikilink-menu button:hover {
+  background: #eef3f8;
+}
+
+.wikilink-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d5dbe3;
+  border-radius: 8px;
+  background: #fff;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wikilink-menu-trigger:hover {
+  background: #f4f7fb;
+}
+
+.visual-editor-content a[href^='sideemd://note/'] {
+  color: #2f5f9b;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .notes-header {

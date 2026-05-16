@@ -44,9 +44,20 @@ export interface TablineActions {
 
 export interface EditorViewState {
   selectedNote: Note | null;
+  noteAncestors: Note[];
+  subnotes: Note[];
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;
   selectionToolbar: { top: number; left: number } | null;
+  wikilinkMenu: {
+    top: number;
+    left: number;
+    options: Array<{
+      noteId: string;
+      title: string;
+      kind: 'existing' | 'create';
+    }>;
+  } | null;
   error: string;
 }
 
@@ -68,6 +79,15 @@ export interface EditorViewActions {
   applySelectionTextColor: (color: string) => void;
   applySelectionBackgroundColor: (color: string) => void;
   selectionToolbarRef: (element: HTMLDivElement | null) => void;
+  onHomeClick: () => void;
+  onCreateSubnote: () => void;
+  onSelectWikilink: (option: {
+    noteId: string;
+    title: string;
+    kind: 'existing' | 'create';
+  }) => void;
+  onOpenWikilinkMenu: () => void;
+  openNoteTab: (noteId: string) => void;
   setError: (value: string) => void;
 }
 

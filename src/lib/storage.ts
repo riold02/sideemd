@@ -12,12 +12,20 @@ import {
   nowIso,
 } from './state';
 import { normalizeState } from './storageNormalize';
+import {
+  appendChild,
+  deleteNotebookFromState,
+  getChromeStorage,
+  removeNoteSubtree,
+  type ChromeStorageLike,
+} from './storageHelpers';
 
 export interface StorageRepository {
   getState(): Promise<AppState>;
   saveState(state: AppState): Promise<void>;
   createNotebook(name: string): Promise<Notebook>;
   createNote(notebookId: string, title?: string): Promise<Note>;
+  createSubnote(parentNoteId: string, title?: string): Promise<Note>;
   updateNote(
     noteId: string,
     updates: Partial<Pick<Note, 'title' | 'contentMarkdown' | 'tags'>>
@@ -28,20 +36,10 @@ export interface StorageRepository {
   searchNotes(query: string): Promise<Note[]>;
 }
 
-interface ChromeStorageLike {
-  get: (keys: string | string[]) => Promise<Record<string, unknown>>;
-  set: (items: Record<string, unknown>) => Promise<void>;
-  remove: (keys: string | string[]) => Promise<void>;
-}
-
-function getChromeStorage(): ChromeStorageLike {
-  return chrome.storage.local;
-}
-
 export class ChromeStorageRepository implements StorageRepository {
   private storage: ChromeStorageLike;
 
-  constructor(storage = getChromeStorage()) {
+  constructor(storage: ChromeStorageLike = getChromeStorage()) {
     this.storage = storage;
   }
 
@@ -89,6 +87,7 @@ export class ChromeStorageRepository implements StorageRepository {
     state.notebooks[notebook.id] = notebook;
     state.notebookOrder.push(notebook.id);
     state.noteOrderByNotebook[notebook.id] = [];
+    state.childOrderByNote = state.childOrderByNote ?? {};
 
     await this.saveState(state);
     return notebook;
@@ -104,6 +103,7 @@ export class ChromeStorageRepository implements StorageRepository {
     const note: Note = {
       id: createId('note'),
       notebookId,
+      parentNoteId: null,
       title: title.trim() || 'Untitled Note',
       contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
       createdAt: timestamp,
@@ -115,6 +115,35 @@ export class ChromeStorageRepository implements StorageRepository {
       state.noteOrderByNotebook[notebookId] ?? [];
     state.noteOrderByNotebook[notebookId].unshift(note.id);
     state.notebooks[notebookId].updatedAt = timestamp;
+
+    await this.saveState(state);
+    return note;
+  }
+
+  async createSubnote(
+    parentNoteId: string,
+    title = 'Untitled Note'
+  ): Promise<Note> {
+    const state = await this.getState();
+    const parent = state.notes[parentNoteId];
+    if (!parent) {
+      throw new Error('Parent note not found');
+    }
+
+    const timestamp = nowIso();
+    const note: Note = {
+      id: createId('note'),
+      notebookId: parent.notebookId,
+      parentNoteId,
+      title: title.trim() || 'Untitled Note',
+      contentMarkdown: '',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    state.notes[note.id] = note;
+    appendChild(state, parentNoteId, note.id);
+    state.notebooks[parent.notebookId].updatedAt = timestamp;
 
     await this.saveState(state);
     return note;
@@ -146,16 +175,7 @@ export class ChromeStorageRepository implements StorageRepository {
 
   async deleteNote(noteId: string): Promise<void> {
     const state = await this.getState();
-    const note = state.notes[noteId];
-    if (!note) {
-      return;
-    }
-
-    delete state.notes[noteId];
-    state.noteOrderByNotebook[note.notebookId] = (
-      state.noteOrderByNotebook[note.notebookId] ?? []
-    ).filter((id) => id !== noteId);
-
+    if (!removeNoteSubtree(state, noteId)) return;
     await this.saveState(state);
   }
 
@@ -178,44 +198,9 @@ export class ChromeStorageRepository implements StorageRepository {
 
   async deleteNotebook(notebookId: string): Promise<void> {
     const state = await this.getState();
-    if (!state.notebooks[notebookId]) {
-      return;
-    }
-
-    const fallbackNotebookId = state.notebookOrder.find(
-      (id) => id !== notebookId
-    );
-    const noteIds = state.noteOrderByNotebook[notebookId] ?? [];
-
-    if (fallbackNotebookId) {
-      for (const noteId of noteIds) {
-        const note = state.notes[noteId];
-        if (!note) {
-          continue;
-        }
-        note.notebookId = fallbackNotebookId;
-        note.updatedAt = nowIso();
-        state.noteOrderByNotebook[fallbackNotebookId] =
-          state.noteOrderByNotebook[fallbackNotebookId] ?? [];
-        state.noteOrderByNotebook[fallbackNotebookId].push(noteId);
-      }
-    } else {
-      for (const noteId of noteIds) {
-        delete state.notes[noteId];
-      }
-    }
-
-    delete state.notebooks[notebookId];
-    delete state.noteOrderByNotebook[notebookId];
-    state.notebookOrder = state.notebookOrder.filter((id) => id !== notebookId);
-
-    if (state.notebookOrder.length === 0) {
-      const initial = createDefaultState();
-      await this.saveState(initial);
-      return;
-    }
-
-    await this.saveState(state);
+    const next = deleteNotebookFromState(state, notebookId);
+    if (!next) return;
+    await this.saveState(next);
   }
 
   async searchNotes(query: string): Promise<Note[]> {

@@ -8,6 +8,11 @@ import {
   replaceImportedState,
   serializeState,
 } from '../../lib/importExport';
+import {
+  collectDescendantIds,
+  getDirectChildren,
+  getNoteAncestors,
+} from '../../lib/noteTree';
 import { HOME_TAB } from '../editorConfig';
 
 function withUpdatedNote(
@@ -76,20 +81,33 @@ export function useSidepanelState(repository: StorageRepository) {
   const currentNoteIds = selectedNotebookId
     ? (state.noteOrderByNotebook[selectedNotebookId] ?? [])
     : [];
-  const currentNotes = currentNoteIds
+  const rootNotes = currentNoteIds
     .map((id) => state.notes[id])
-    .filter(Boolean) as Note[];
+    .filter(
+      (note): note is Note => Boolean(note) && note.parentNoteId === null
+    );
   const allNotes = Object.values(state.notes);
 
   const filteredNotes = useMemo(() => {
-    if (!search.trim()) return currentNotes;
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+    if (!q) return rootNotes;
     return allNotes.filter(
       (note) =>
-        note.title.toLowerCase().includes(q) ||
-        note.contentMarkdown.toLowerCase().includes(q)
+        note.notebookId === selectedNotebookId &&
+        (note.title.toLowerCase().includes(q) ||
+          note.contentMarkdown.toLowerCase().includes(q))
     );
-  }, [currentNotes, allNotes, search]);
+  }, [allNotes, rootNotes, search, selectedNotebookId]);
+
+  const selectedNoteAncestors = useMemo(() => {
+    if (!selectedNote) return [];
+    return getNoteAncestors(state, selectedNote.id);
+  }, [selectedNote, state]);
+
+  const selectedNoteSubnotes = useMemo(() => {
+    if (!selectedNote) return [];
+    return getDirectChildren(state, selectedNote.id);
+  }, [selectedNote, state]);
 
   function patchState(next: AppState) {
     setState(next);
@@ -134,8 +152,25 @@ export function useSidepanelState(repository: StorageRepository) {
     setActiveTab(note.id);
   }
 
+  async function handleCreateSubnote(
+    parentNoteId: string,
+    title = 'Untitled Note'
+  ) {
+    const note = await repository.createSubnote(parentNoteId, title);
+    patchState(await repository.getState());
+    setOpenNoteIds((ids) => (ids.includes(note.id) ? ids : [...ids, note.id]));
+    setActiveNoteId(note.id);
+    setActiveTab(note.id);
+    return note;
+  }
+
   async function handleDeleteNote(noteId: string) {
-    if (!window.confirm('Delete note?')) return;
+    const descendantCount = collectDescendantIds(state, noteId).length;
+    const message =
+      descendantCount > 0
+        ? `Delete this note and ${descendantCount} subnote(s)?`
+        : 'Delete this note?';
+    if (!window.confirm(message)) return;
     await repository.deleteNote(noteId);
     const next = await repository.getState();
     patchState(next);
@@ -198,11 +233,14 @@ export function useSidepanelState(repository: StorageRepository) {
     isHomeMenuOpen,
     setIsHomeMenuOpen,
     selectedNote,
+    selectedNoteAncestors,
+    selectedNoteSubnotes,
     filteredNotes,
     openNoteTab,
     closeNoteTab,
     updateNote,
     handleCreateNote,
+    handleCreateSubnote,
     handleDeleteNote,
     handleExport,
     handleImport,
