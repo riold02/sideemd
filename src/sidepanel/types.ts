@@ -38,6 +38,7 @@ export interface TablineActions {
   closeNoteTab: (id: string) => void;
   handleCreateNote: () => Promise<void> | void;
   onHomeClick: () => void;
+  onCloseSidebar: () => void;
 }
 
 export interface EditorViewState {

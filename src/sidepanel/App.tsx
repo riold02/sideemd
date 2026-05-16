@@ -70,6 +70,7 @@ export default function App() {
       closeNoteTab,
       handleCreateNote,
       onHomeClick: () => setActiveTab(HOME_TAB),
+      onCloseSidebar: () => window.close(),
     }),
     [openNoteTab, closeNoteTab, handleCreateNote, setActiveTab]
   );

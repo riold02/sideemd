@@ -44,6 +44,10 @@ label {
   overflow-x: auto;
 }
 
+.tabline-spacer {
+  flex: 1 1 auto;
+}
+
 .home-tab {
   display: inline-flex;
   align-items: center;

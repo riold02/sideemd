@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, X } from 'lucide-react';
 import type { TablineActions, TablineState } from '../types';
 
 interface Props {
@@ -8,7 +8,13 @@ interface Props {
 
 export default function Tabline({ state, actions }: Props) {
   const { activeTab, openNoteIds, notesById } = state;
-  const { openNoteTab, closeNoteTab, handleCreateNote, onHomeClick } = actions;
+  const {
+    openNoteTab,
+    closeNoteTab,
+    handleCreateNote,
+    onHomeClick,
+    onCloseSidebar,
+  } = actions;
 
   return (
     <nav className="tabline" aria-label="Open notes">
@@ -55,6 +61,15 @@ export default function Tabline({ state, actions }: Props) {
         aria-label="Create note"
       >
         +
+      </button>
+      <span className="tabline-spacer" />
+      <button
+        className="icon-button"
+        onClick={() => onCloseSidebar()}
+        aria-label="Close sidebar"
+        title="Close sidebar"
+      >
+        <X size={16} strokeWidth={2.2} />
       </button>
     </nav>
   );
