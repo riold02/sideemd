@@ -14,7 +14,7 @@ export default defineManifest({
     type: "module"
   },
   side_panel: {
-    default_path: "src/features/sidepanel/index.html"
+    default_path: "src/sidepanel/index.html"
   },
   commands: {
     "open-side-panel": {
