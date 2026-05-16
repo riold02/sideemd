@@ -1,4 +1,4 @@
-import { useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
 import type React from 'react';
 import type { Note } from '../../lib/types';
@@ -29,6 +29,26 @@ export function useEditorBlockInsert({
     signature: string;
   } | null>(null);
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!isBlockMenuOpen) return;
+      if (!(event.target instanceof Element)) return;
+      const clickedInsideInsertControl = Boolean(
+        event.target.closest(
+          '.block-insert-control, .block-insert-menu, .block-insert-button'
+        )
+      );
+      if (!clickedInsideInsertControl) {
+        setIsBlockMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [isBlockMenuOpen]);
 
   function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     const shell = editorShellRef.current;
