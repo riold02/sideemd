@@ -17,12 +17,17 @@ interface Params {
   ) => void;
 }
 
-function isNoteMostlyEmpty(markdown: string): boolean {
+export function isNoteMostlyEmpty(markdown: string): boolean {
   const stripped = markdown
     .replace(/[#>*\-\[\]`]/g, '')
     .replace(/\s+/g, '')
     .trim();
   return stripped.length === 0;
+}
+
+/** Only replace the whole note when it has no real content; otherwise insert at cursor. */
+export function shouldReplaceNoteOnPaste(currentMarkdown: string): boolean {
+  return isNoteMostlyEmpty(currentMarkdown);
 }
 
 export function useMarkdownPaste({
@@ -56,7 +61,7 @@ export function useMarkdownPaste({
       const prepared = prepareMarkdownForEditor(plain);
       const current = editor.getMarkdown();
 
-      if (isNoteMostlyEmpty(current) || prepared.split('\n').length >= 4) {
+      if (shouldReplaceNoteOnPaste(current)) {
         editor.setMarkdown(prepared);
       } else {
         editor.insertMarkdown(prepared);

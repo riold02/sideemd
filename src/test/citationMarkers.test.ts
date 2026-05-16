@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { shouldReplaceNoteOnPaste } from '../sidepanel/hooks/useMarkdownPaste';
 import {
   looksLikeMarkdownPaste,
   normalizeCitationMarkers,
@@ -29,5 +30,12 @@ describe('citation markers', () => {
     expect(prepareMarkdownForEditor(input)).toBe(
       'Hello<sup class="cite-mark">[1]</sup>'
     );
+  });
+});
+
+describe('markdown paste placement', () => {
+  it('replaces only when the note is empty', () => {
+    expect(shouldReplaceNoteOnPaste('')).toBe(true);
+    expect(shouldReplaceNoteOnPaste('## About\n\nExisting body')).toBe(false);
   });
 });
