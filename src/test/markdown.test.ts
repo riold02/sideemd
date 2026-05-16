@@ -58,10 +58,10 @@ describe('replaceBlockWithMarkdown', () => {
     const next = replaceBlockWithMarkdown(
       markdown,
       '/',
-      '- [Child](sideemd://note/child)'
+      '- [Child](/sideemd/note/child)'
     );
     expect(next).toBe(
-      ['Intro', '- [Child](sideemd://note/child)', 'Outro'].join('\n')
+      ['Intro', '- [Child](/sideemd/note/child)', 'Outro'].join('\n')
     );
   });
 });

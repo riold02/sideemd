@@ -12,16 +12,31 @@ import {
   thematicBreakPlugin,
   type MDXEditorProps,
 } from '@mdxeditor/editor';
+import {
+  SIDEMD_NOTE_PATH_PREFIX,
+  SIDEMD_NOTE_URL_PREFIX,
+} from '../lib/noteLinks';
 import { formatCommandPlugin } from './plugins/formatCommandPlugin';
 
 export const HOME_TAB = 'home';
+
+function isAllowedLinkUrl(url: string): boolean {
+  return (
+    url.startsWith(SIDEMD_NOTE_PATH_PREFIX) ||
+    url.startsWith(SIDEMD_NOTE_URL_PREFIX) ||
+    /^https?:/i.test(url) ||
+    url.startsWith('mailto:') ||
+    url.startsWith('tel:') ||
+    url.startsWith('sms:')
+  );
+}
 
 export const editorPlugins: NonNullable<MDXEditorProps['plugins']> = [
   formatCommandPlugin(),
   headingsPlugin(),
   frontmatterPlugin(),
   listsPlugin(),
-  linkPlugin(),
+  linkPlugin({ validateUrl: isAllowedLinkUrl }),
   imagePlugin({ disableImageResize: true, disableImageSettingsButton: true }),
   quotePlugin(),
   thematicBreakPlugin(),
@@ -29,6 +44,7 @@ export const editorPlugins: NonNullable<MDXEditorProps['plugins']> = [
   codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
   codeMirrorPlugin({
     codeBlockLanguages: {
+      '': 'Plain text',
       txt: 'Plain text',
       ts: 'TypeScript',
       tsx: 'TSX',

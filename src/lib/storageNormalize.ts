@@ -1,3 +1,4 @@
+import { normalizeNoteLinksInMarkdown } from './noteLinks';
 import { AppState, SCHEMA_VERSION } from './types';
 import {
   MARKDOWN_SHOWCASE_MARKDOWN,
@@ -83,6 +84,15 @@ export function normalizeState(state: AppState): AppState {
       next.notes[noteId] = {
         ...note,
         contentMarkdown: WELCOME_MARKDOWN,
+      };
+      changed = true;
+    }
+
+    const normalizedLinks = normalizeNoteLinksInMarkdown(note.contentMarkdown);
+    if (normalizedLinks !== note.contentMarkdown) {
+      next.notes[noteId] = {
+        ...next.notes[noteId],
+        contentMarkdown: normalizedLinks,
       };
       changed = true;
     }

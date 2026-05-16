@@ -512,10 +512,33 @@ button,
   background: #f4f7fb;
 }
 
+.visual-editor-content a[href^='/sideemd/note/'],
 .visual-editor-content a[href^='sideemd://note/'] {
   color: #2f5f9b;
   text-decoration: underline;
   text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.visual-editor.mdxeditor pre,
+.visual-editor.mdxeditor .cm-editor {
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.visual-editor.mdxeditor .cm-editor {
+  border: 1px solid #d5dbe3;
+  background: #f8fafc;
+}
+
+.visual-editor.mdxeditor .visual-editor-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  background: #eef2f7;
+  padding: 0.08rem 0.34rem;
+  border-radius: 4px;
 }
 
 .notes-header {
