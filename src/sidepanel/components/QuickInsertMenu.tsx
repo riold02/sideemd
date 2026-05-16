@@ -22,10 +22,12 @@ interface Props {
   onApplyFormat: (format: QuickFormat) => void;
   onTextColor: (color: string) => void;
   onBackgroundColor: (color: string) => void;
+  onCreateSubnote?: () => void;
   onOpenWikilinkMenu?: () => void;
 }
 
 const sectionOrder = [
+  'Subnotes',
   'Text Style',
   'Basic Text',
   'Lists',
@@ -39,6 +41,7 @@ export default function QuickInsertMenu({
   onApplyFormat,
   onTextColor,
   onBackgroundColor,
+  onCreateSubnote,
   onOpenWikilinkMenu,
 }: Props) {
   const allOptions: Array<
@@ -52,6 +55,35 @@ export default function QuickInsertMenu({
   return (
     <div className="block-insert-menu" role="menu">
       {sectionOrder.map((section) => {
+        if (section === 'Subnotes') {
+          if (!onCreateSubnote && !onOpenWikilinkMenu) return null;
+          return (
+            <div className="block-insert-group" key={section}>
+              <div className="block-insert-group-title">{section}</div>
+              {onCreateSubnote ? (
+                <button type="button" onClick={onCreateSubnote} role="menuitem">
+                  <span className="block-option-icon" aria-hidden>
+                    +
+                  </span>
+                  <span>Create sub-note</span>
+                </button>
+              ) : null}
+              {onOpenWikilinkMenu ? (
+                <button
+                  type="button"
+                  onClick={onOpenWikilinkMenu}
+                  role="menuitem"
+                >
+                  <span className="block-option-icon" aria-hidden>
+                    ↗
+                  </span>
+                  <span>Link to subnote</span>
+                </button>
+              ) : null}
+            </div>
+          );
+        }
+
         const options = allOptions.filter(
           (entry) => entry.option.section === section
         );
@@ -65,19 +97,6 @@ export default function QuickInsertMenu({
                   onTextColor={onTextColor}
                   onBackgroundColor={onBackgroundColor}
                 />
-                {onOpenWikilinkMenu ? (
-                  <button
-                    type="button"
-                    className="wikilink-menu-trigger"
-                    onClick={onOpenWikilinkMenu}
-                    role="menuitem"
-                  >
-                    <span className="block-option-icon" aria-hidden>
-                      ↗
-                    </span>
-                    Link to subnote
-                  </button>
-                ) : null}
               </div>
             ) : null}
             {options.map((entry) => (

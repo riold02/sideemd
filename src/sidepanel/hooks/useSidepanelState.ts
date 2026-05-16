@@ -8,11 +8,7 @@ import {
   replaceImportedState,
   serializeState,
 } from '../../lib/importExport';
-import {
-  collectDescendantIds,
-  getDirectChildren,
-  getNoteAncestors,
-} from '../../lib/noteTree';
+import { collectDescendantIds, getNoteAncestors } from '../../lib/noteTree';
 import { HOME_TAB } from '../editorConfig';
 
 function withUpdatedNote(
@@ -104,11 +100,6 @@ export function useSidepanelState(repository: StorageRepository) {
     return getNoteAncestors(state, selectedNote.id);
   }, [selectedNote, state]);
 
-  const selectedNoteSubnotes = useMemo(() => {
-    if (!selectedNote) return [];
-    return getDirectChildren(state, selectedNote.id);
-  }, [selectedNote, state]);
-
   function patchState(next: AppState) {
     setState(next);
   }
@@ -154,13 +145,16 @@ export function useSidepanelState(repository: StorageRepository) {
 
   async function handleCreateSubnote(
     parentNoteId: string,
-    title = 'Untitled Note'
+    title = 'Untitled Note',
+    options: { openTab?: boolean } = {}
   ) {
     const note = await repository.createSubnote(parentNoteId, title);
     patchState(await repository.getState());
     setOpenNoteIds((ids) => (ids.includes(note.id) ? ids : [...ids, note.id]));
-    setActiveNoteId(note.id);
-    setActiveTab(note.id);
+    if (options.openTab) {
+      setActiveNoteId(note.id);
+      setActiveTab(note.id);
+    }
     return note;
   }
 
@@ -234,7 +228,6 @@ export function useSidepanelState(repository: StorageRepository) {
     setIsHomeMenuOpen,
     selectedNote,
     selectedNoteAncestors,
-    selectedNoteSubnotes,
     filteredNotes,
     openNoteTab,
     closeNoteTab,

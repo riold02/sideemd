@@ -3,7 +3,6 @@ import { MDXEditor } from '@mdxeditor/editor';
 import NoteBreadcrumb from './NoteBreadcrumb';
 import QuickInsertMenu from './QuickInsertMenu';
 import SelectionFormatToolbar from './SelectionFormatToolbar';
-import SubnotesPanel from './SubnotesPanel';
 import WikilinkMenu from './WikilinkMenu';
 import type {
   EditorViewActions,
@@ -21,7 +20,6 @@ export default function EditorView({ state, actions, config }: Props) {
   const {
     selectedNote,
     noteAncestors,
-    subnotes,
     isBlockMenuOpen,
     blockInsertTarget,
     selectionToolbar,
@@ -32,6 +30,7 @@ export default function EditorView({ state, actions, config }: Props) {
     updateNote,
     handleEditorMouseMove,
     setIsBlockMenuOpen,
+    setBlockInsertTarget,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
     applySelectionFormat,
@@ -41,7 +40,7 @@ export default function EditorView({ state, actions, config }: Props) {
     applyBackgroundColorFromMenu,
     selectionToolbarRef,
     onHomeClick,
-    onCreateSubnote,
+    createSubnoteAtCurrentBlock,
     onSelectWikilink,
     onOpenWikilinkMenu,
     openNoteTab,
@@ -77,12 +76,6 @@ export default function EditorView({ state, actions, config }: Props) {
             currentTitle={selectedNote.title}
             onHomeClick={onHomeClick}
             onOpenNote={openNoteTab}
-          />
-
-          <SubnotesPanel
-            subnotes={subnotes}
-            onOpenSubnote={openNoteTab}
-            onCreateSubnote={onCreateSubnote}
           />
 
           <div
@@ -135,7 +128,12 @@ export default function EditorView({ state, actions, config }: Props) {
                     onApplyFormat={applyQuickFormatFromMenu}
                     onTextColor={applyTextColorFromMenu}
                     onBackgroundColor={applyBackgroundColorFromMenu}
-                    onOpenWikilinkMenu={onOpenWikilinkMenu}
+                    onCreateSubnote={() => void createSubnoteAtCurrentBlock()}
+                    onOpenWikilinkMenu={() => {
+                      setIsBlockMenuOpen(false);
+                      setBlockInsertTarget(null);
+                      onOpenWikilinkMenu();
+                    }}
                   />
                 ) : null}
               </div>

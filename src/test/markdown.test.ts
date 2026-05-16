@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   insertMarkdownAfterBlock,
   isSlashTriggerBlock,
+  replaceBlockWithMarkdown,
   resolveBlockInsertHover,
 } from '../sidepanel/utils/markdown';
 
@@ -48,6 +49,20 @@ describe('resolveBlockInsertHover', () => {
     expect(hoverTarget?.signature).toContain('Second quoted line');
 
     root.remove();
+  });
+});
+
+describe('replaceBlockWithMarkdown', () => {
+  it('replaces a slash trigger line with a subnote link list item', () => {
+    const markdown = ['Intro', '/', 'Outro'].join('\n');
+    const next = replaceBlockWithMarkdown(
+      markdown,
+      '/',
+      '- [Child](sideemd://note/child)'
+    );
+    expect(next).toBe(
+      ['Intro', '- [Child](sideemd://note/child)', 'Outro'].join('\n')
+    );
   });
 });
 

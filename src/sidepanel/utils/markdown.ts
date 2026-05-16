@@ -128,6 +128,22 @@ export function insertMarkdownAfterBlock(
   return nextLines.join('\n');
 }
 
+export function replaceBlockWithMarkdown(
+  markdown: string,
+  signature: string,
+  blockMarkdown: string
+): string {
+  const lines = markdown.split('\n');
+  const matchIndex = findInsertLineIndex(lines, signature);
+  if (matchIndex === -1) {
+    const trimmed = markdown.trimEnd();
+    return trimmed ? `${trimmed}\n\n${blockMarkdown}` : blockMarkdown;
+  }
+  const nextLines = [...lines];
+  nextLines[matchIndex] = blockMarkdown;
+  return nextLines.join('\n');
+}
+
 function stripMarkdown(markdown: string): string {
   return markdown
     .replace(/^---[\s\S]*?---/, '')

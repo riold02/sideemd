@@ -14,7 +14,6 @@ import type { QuickFormat } from '../utils/editorFormat';
 interface Params {
   selectedNote: Note | null;
   selectedNoteAncestors: Note[];
-  selectedNoteSubnotes: Note[];
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;
   selectionToolbar: { top: number; left: number } | null;
@@ -28,6 +27,7 @@ interface Params {
   setIsBlockMenuOpen: EditorViewActions['setIsBlockMenuOpen'];
   setBlockInsertTarget: EditorViewActions['setBlockInsertTarget'];
   insertBlockBelowCurrentTarget: EditorViewActions['insertBlockBelowCurrentTarget'];
+  createSubnoteAtCurrentBlock: EditorViewActions['createSubnoteAtCurrentBlock'];
   applyQuickFormatFromMenu: (format: QuickFormat) => void;
   applySelectionFormat: (format: QuickFormat) => void;
   applySelectionTextColor: (color: string) => void;
@@ -35,7 +35,6 @@ interface Params {
   applyTextColorFromMenu: (color: string) => void;
   applyBackgroundColorFromMenu: (color: string) => void;
   selectionToolbarRef: EditorViewActions['selectionToolbarRef'];
-  handleCreateSubnote: (parentNoteId: string, title?: string) => Promise<Note>;
   handleSelectWikilink: (option: WikilinkOption) => void | Promise<void>;
   openWikilinkMenu: (query: string) => void;
   openNoteTab: (noteId: string) => void;
@@ -45,7 +44,6 @@ interface Params {
 export function useEditorViewProps({
   selectedNote,
   selectedNoteAncestors,
-  selectedNoteSubnotes,
   isBlockMenuOpen,
   blockInsertTarget,
   selectionToolbar,
@@ -59,6 +57,7 @@ export function useEditorViewProps({
   setIsBlockMenuOpen,
   setBlockInsertTarget,
   insertBlockBelowCurrentTarget,
+  createSubnoteAtCurrentBlock,
   applyQuickFormatFromMenu,
   applySelectionFormat,
   applySelectionTextColor,
@@ -66,7 +65,6 @@ export function useEditorViewProps({
   applyTextColorFromMenu,
   applyBackgroundColorFromMenu,
   selectionToolbarRef,
-  handleCreateSubnote,
   handleSelectWikilink,
   openWikilinkMenu,
   openNoteTab,
@@ -76,7 +74,6 @@ export function useEditorViewProps({
     () => ({
       selectedNote,
       noteAncestors: selectedNoteAncestors,
-      subnotes: selectedNoteSubnotes,
       isBlockMenuOpen,
       blockInsertTarget,
       selectionToolbar,
@@ -86,7 +83,6 @@ export function useEditorViewProps({
     [
       selectedNote,
       selectedNoteAncestors,
-      selectedNoteSubnotes,
       isBlockMenuOpen,
       blockInsertTarget,
       selectionToolbar,
@@ -110,9 +106,7 @@ export function useEditorViewProps({
       applyBackgroundColorFromMenu,
       selectionToolbarRef,
       onHomeClick: () => setActiveTab(HOME_TAB),
-      onCreateSubnote: () => {
-        if (selectedNote) void handleCreateSubnote(selectedNote.id);
-      },
+      createSubnoteAtCurrentBlock,
       onSelectWikilink: (option) => {
         void handleSelectWikilink(option);
       },
@@ -126,6 +120,7 @@ export function useEditorViewProps({
       setIsBlockMenuOpen,
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
+      createSubnoteAtCurrentBlock,
       applyQuickFormatFromMenu,
       applySelectionFormat,
       applySelectionTextColor,
@@ -134,8 +129,6 @@ export function useEditorViewProps({
       applyBackgroundColorFromMenu,
       selectionToolbarRef,
       setActiveTab,
-      selectedNote,
-      handleCreateSubnote,
       handleSelectWikilink,
       openWikilinkMenu,
       openNoteTab,

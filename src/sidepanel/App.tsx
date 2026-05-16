@@ -43,7 +43,6 @@ export default function App() {
     handleExport,
     handleImport,
     selectedNoteAncestors,
-    selectedNoteSubnotes,
   } = useSidepanelState(repository);
 
   const {
@@ -56,11 +55,16 @@ export default function App() {
     applyQuickFormatFromMenu,
     applyTextColorFromMenu,
     applyBackgroundColorFromMenu,
+    createSubnoteAtCurrentBlock,
   } = useEditorBlockInsert({
     editorShellRef,
     editorRef,
     selectedNote,
     updateNote,
+    createSubnote: (title) =>
+      selectedNote
+        ? handleCreateSubnote(selectedNote.id, title)
+        : Promise.resolve(null),
   });
 
   const {
@@ -91,7 +95,6 @@ export default function App() {
   const editorView = useEditorViewProps({
     selectedNote,
     selectedNoteAncestors,
-    selectedNoteSubnotes,
     isBlockMenuOpen,
     blockInsertTarget,
     selectionToolbar,
@@ -105,6 +108,7 @@ export default function App() {
     setIsBlockMenuOpen,
     setBlockInsertTarget,
     insertBlockBelowCurrentTarget,
+    createSubnoteAtCurrentBlock,
     applyQuickFormatFromMenu,
     applySelectionFormat,
     applySelectionTextColor,
@@ -112,7 +116,6 @@ export default function App() {
     applyTextColorFromMenu,
     applyBackgroundColorFromMenu,
     selectionToolbarRef,
-    handleCreateSubnote,
     handleSelectWikilink,
     openWikilinkMenu,
     openNoteTab,

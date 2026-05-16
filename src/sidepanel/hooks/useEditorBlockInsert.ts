@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
 import type React from 'react';
+import { buildNoteLinkMarkdown } from '../../lib/noteLinks';
 import type { Note } from '../../lib/types';
 import {
   BLOCK_INSERT_SELECTOR,
@@ -14,6 +15,7 @@ import {
   insertMarkdownAfterBlock,
   isEditableBlockElement,
   isEmptyBlockSignature,
+  replaceBlockWithMarkdown,
   resolveBlockInsertHover,
 } from '../utils/markdown';
 import {
@@ -32,6 +34,7 @@ interface Params {
     id: string,
     updates: Partial<Pick<Note, 'title' | 'contentMarkdown'>>
   ) => void;
+  createSubnote: (title?: string) => Promise<Note | null>;
 }
 
 export function useEditorBlockInsert({
@@ -39,6 +42,7 @@ export function useEditorBlockInsert({
   editorRef,
   selectedNote,
   updateNote,
+  createSubnote,
 }: Params) {
   const [blockInsertTarget, setBlockInsertTarget] = useState<{
     top: number;
@@ -183,6 +187,33 @@ export function useEditorBlockInsert({
     closeQuickMenu();
   }
 
+  async function createSubnoteAtCurrentBlock() {
+    if (!selectedNote || !blockInsertTarget) return;
+
+    const created = await createSubnote('Untitled Note');
+    if (!created) return;
+
+    const linkLine = `- ${buildNoteLinkMarkdown(created.title, created.id)}`;
+    const { signature } = blockInsertTarget;
+
+    if (isEmptyBlockSignature(signature) && editorRef.current) {
+      editorRef.current.insertMarkdown(linkLine);
+      const nextMarkdown = editorRef.current.getMarkdown();
+      updateNote(selectedNote.id, { contentMarkdown: nextMarkdown });
+      closeQuickMenu();
+      return;
+    }
+
+    const nextMarkdown = replaceBlockWithMarkdown(
+      selectedNote.contentMarkdown,
+      signature,
+      linkLine
+    );
+    updateNote(selectedNote.id, { contentMarkdown: nextMarkdown });
+    editorRef.current?.setMarkdown(nextMarkdown);
+    closeQuickMenu();
+  }
+
   return {
     isBlockMenuOpen,
     setIsBlockMenuOpen,
@@ -193,6 +224,7 @@ export function useEditorBlockInsert({
     applyQuickFormatFromMenu,
     applyTextColorFromMenu,
     applyBackgroundColorFromMenu,
+    createSubnoteAtCurrentBlock,
     openQuickMenuFromElement,
     closeQuickMenu,
   };

@@ -45,7 +45,6 @@ export interface TablineActions {
 export interface EditorViewState {
   selectedNote: Note | null;
   noteAncestors: Note[];
-  subnotes: Note[];
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;
   selectionToolbar: { top: number; left: number } | null;
@@ -80,7 +79,7 @@ export interface EditorViewActions {
   applySelectionBackgroundColor: (color: string) => void;
   selectionToolbarRef: (element: HTMLDivElement | null) => void;
   onHomeClick: () => void;
-  onCreateSubnote: () => void;
+  createSubnoteAtCurrentBlock: () => void | Promise<void>;
   onSelectWikilink: (option: {
     noteId: string;
     title: string;
