@@ -1,6 +1,10 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
-import { MDXEditor, type MDXEditorMethods } from '@mdxeditor/editor';
+import {
+  MDXEditor,
+  type MDXEditorMethods,
+  type MDXEditorProps,
+} from '@mdxeditor/editor';
 import type { Note } from '../../lib/types';
 
 interface Props {
@@ -16,10 +20,10 @@ interface Props {
   setIsBlockMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   blockInsertTarget: { top: number; signature: string } | null;
   insertBlockBelowCurrentTarget: (md: string) => void;
-  blockInsertOptions: { label: string; markdown: string }[];
+  blockInsertOptions: ReadonlyArray<{ label: string; markdown: string }>;
   error: string;
   setError: (v: string) => void;
-  editorPlugins: any[];
+  editorPlugins: NonNullable<MDXEditorProps['plugins']>;
 }
 
 export default function EditorView({
