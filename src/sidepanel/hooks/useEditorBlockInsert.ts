@@ -53,6 +53,7 @@ export function useEditorBlockInsert({
   function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     const shell = editorShellRef.current;
     if (!shell) return;
+    if (isBlockMenuOpen) return;
     const targetElement =
       event.target instanceof Element
         ? event.target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,table,hr')
