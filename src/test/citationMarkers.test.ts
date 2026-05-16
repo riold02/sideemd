@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { shouldReplaceNoteOnPaste } from '../sidepanel/hooks/useMarkdownPaste';
 import {
+  escapeInvalidMdxTagStarts,
   looksLikeMarkdownPaste,
   normalizeCitationMarkers,
   prepareMarkdownForEditor,
@@ -29,6 +30,16 @@ describe('citation markers', () => {
     const input = '```md\n[cite_start]Hello[cite: 1]\n```';
     expect(prepareMarkdownForEditor(input)).toBe(
       'Hello<sup class="cite-mark">[1]</sup>'
+    );
+  });
+
+  it('escapes invalid mdx tag starts', () => {
+    const input = 'Flow: <- Start\nValue: <1';
+    expect(escapeInvalidMdxTagStarts(input)).toBe(
+      'Flow: &lt;- Start\nValue: &lt;1'
+    );
+    expect(prepareMarkdownForEditor(input)).toBe(
+      'Flow: &lt;- Start\nValue: &lt;1'
     );
   });
 });

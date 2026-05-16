@@ -186,8 +186,18 @@ export function unwrapMarkdownCodeFence(text: string): string {
   return text;
 }
 
+/**
+ * MDX parser treats "<...>" as JSX and crashes on invalid openings like "<-".
+ * Escape those starts while preserving normal HTML/JSX-looking tags.
+ */
+export function escapeInvalidMdxTagStarts(markdown: string): string {
+  return markdown.replace(/<(?=[^A-Za-z/!?\s])/g, '&lt;');
+}
+
 export function prepareMarkdownForEditor(markdown: string): string {
-  return normalizeCitationMarkers(unwrapMarkdownCodeFence(markdown));
+  return escapeInvalidMdxTagStarts(
+    normalizeCitationMarkers(unwrapMarkdownCodeFence(markdown))
+  );
 }
 
 export function looksLikeMarkdownPaste(text: string): boolean {
