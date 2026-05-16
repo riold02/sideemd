@@ -1,6 +1,6 @@
 import {
+  useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -9,13 +9,15 @@ import type { MDXEditorMethods } from '@mdxeditor/editor';
 import type React from 'react';
 import type { Note } from '../../lib/types';
 import {
+  BLOCK_INSERT_SELECTOR,
+  getBlockInsertSignature,
   insertMarkdownAfterBlock,
+  isEditableBlockElement,
   isEmptyBlockSignature,
-  isSlashTriggerBlock,
-  normalizeBlockText,
   resolveBlockInsertHover,
 } from '../utils/markdown';
 import { applyQuickFormat, type QuickFormat } from '../utils/editorFormat';
+import { useSlashQuickMenu } from './useSlashQuickMenu';
 
 interface Params {
   editorShellRef: React.RefObject<HTMLDivElement>;
@@ -61,49 +63,25 @@ export function useEditorBlockInsert({
     };
   }, [isBlockMenuOpen]);
 
-  useLayoutEffect(() => {
-    if (!selectedNote) return;
-
-    function getEditorKeyTarget(): HTMLElement | null {
+  const openQuickMenuFromElement = useCallback(
+    (targetElement: Element): boolean => {
       const shell = editorShellRef.current;
-      if (!shell) return null;
-      return (
-        shell.querySelector<HTMLElement>('.visual-editor-content') ?? shell
-      );
-    }
+      if (!shell) return false;
 
-    function handleSlashKey(event: KeyboardEvent) {
-      const shell = editorShellRef.current;
-      if (!shell || event.key !== '/' || event.defaultPrevented) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-
-      const target =
-        event.target instanceof Element
-          ? event.target
-          : document.activeElement instanceof Element
-            ? document.activeElement
-            : null;
-      if (!target) return;
-
-      const editableBlock = target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote');
-      if (!editableBlock || !shell.contains(editableBlock)) return;
-
-      const blockText = normalizeBlockText(editableBlock.textContent ?? '');
-      if (!isSlashTriggerBlock(blockText)) return;
-
-      if (isBlockMenuOpenRef.current) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        editorRef.current?.insertMarkdown('/');
-        setIsBlockMenuOpen(false);
-        setBlockInsertTarget(null);
-        return;
+      let hoverTarget = resolveBlockInsertHover(targetElement, shell);
+      if (!hoverTarget) {
+        const block =
+          targetElement.closest(BLOCK_INSERT_SELECTOR) ??
+          (isEditableBlockElement(targetElement) ? targetElement : null);
+        if (block && shell.contains(block)) {
+          const signature = getBlockInsertSignature(block);
+          if (signature) {
+            hoverTarget = { block, anchor: block, signature };
+          }
+        }
       }
+      if (!hoverTarget) return false;
 
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const hoverTarget = resolveBlockInsertHover(editableBlock, shell);
-      if (!hoverTarget) return;
       const shellRect = shell.getBoundingClientRect();
       const anchorRect = hoverTarget.anchor.getBoundingClientRect();
       setBlockInsertTarget({
@@ -111,27 +89,24 @@ export function useEditorBlockInsert({
         signature: hoverTarget.signature,
       });
       setIsBlockMenuOpen(true);
-    }
+      return true;
+    },
+    [editorShellRef]
+  );
 
-    let keyTarget: HTMLElement | null = null;
-    let rafId = 0;
+  const closeQuickMenu = useCallback(() => {
+    setIsBlockMenuOpen(false);
+    setBlockInsertTarget(null);
+  }, []);
 
-    function bindKeyTarget() {
-      if (keyTarget) {
-        keyTarget.removeEventListener('keydown', handleSlashKey, true);
-      }
-      keyTarget = getEditorKeyTarget();
-      keyTarget?.addEventListener('keydown', handleSlashKey, true);
-    }
-
-    bindKeyTarget();
-    rafId = requestAnimationFrame(bindKeyTarget);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      keyTarget?.removeEventListener('keydown', handleSlashKey, true);
-    };
-  }, [selectedNote?.id, editorRef, editorShellRef]);
+  useSlashQuickMenu({
+    noteId: selectedNote?.id,
+    editorShellRef,
+    editorRef,
+    isBlockMenuOpenRef,
+    openQuickMenuFromElement,
+    closeQuickMenu,
+  });
 
   function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     const shell = editorShellRef.current;
@@ -161,25 +136,6 @@ export function useEditorBlockInsert({
       top: anchorRect.top - shellRect.top + anchorRect.height / 2,
       signature: hoverTarget.signature,
     });
-  }
-
-  function openQuickMenuFromElement(targetElement: Element) {
-    const shell = editorShellRef.current;
-    if (!shell) return;
-    const hoverTarget = resolveBlockInsertHover(targetElement, shell);
-    if (!hoverTarget) return;
-    const shellRect = shell.getBoundingClientRect();
-    const anchorRect = hoverTarget.anchor.getBoundingClientRect();
-    setBlockInsertTarget({
-      top: anchorRect.top - shellRect.top + anchorRect.height / 2,
-      signature: hoverTarget.signature,
-    });
-    setIsBlockMenuOpen(true);
-  }
-
-  function closeQuickMenu() {
-    setIsBlockMenuOpen(false);
-    setBlockInsertTarget(null);
   }
 
   function insertBlockBelowCurrentTarget(markdown: string) {

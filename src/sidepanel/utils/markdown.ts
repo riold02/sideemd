@@ -31,7 +31,7 @@ export function isSlashTriggerBlock(text: string): boolean {
   return normalized.length === 0 || normalized === '/';
 }
 
-function getBlockInsertSignature(block: Element): string {
+export function getBlockInsertSignature(block: Element): string {
   const text = normalizeBlockText(block.textContent ?? '');
   if (text) return text;
   if (block.tagName === 'BLOCKQUOTE') return '__blockquote__';
