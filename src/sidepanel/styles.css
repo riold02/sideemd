@@ -567,6 +567,8 @@ button,
   right: 0;
   display: grid;
   min-width: 225px;
+  max-height: min(70vh, 420px);
+  overflow-y: auto;
   border: 1px solid #b9c1cc;
   border-radius: 8px;
   background: #fff;

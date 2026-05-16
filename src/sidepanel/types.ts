@@ -1,6 +1,7 @@
 import type { MDXEditorMethods, MDXEditorProps } from '@mdxeditor/editor';
 import type React from 'react';
 import type { AppState, Note } from '../lib/types';
+import type { QuickFormat } from './utils/editorFormat';
 
 export interface HomeViewState {
   filteredNotes: Note[];
@@ -59,6 +60,8 @@ export interface EditorViewActions {
     React.SetStateAction<{ top: number; signature: string } | null>
   >;
   insertBlockBelowCurrentTarget: (md: string) => void;
+  applyQuickFormatFromMenu: (format: QuickFormat) => void;
+  handleEditorKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   setError: (value: string) => void;
 }
 
@@ -70,6 +73,12 @@ export interface EditorViewConfig {
     markdown: string;
     icon: string;
     section: 'Basic Text' | 'Lists' | 'Advanced Layout';
+  }>;
+  formatOptions: ReadonlyArray<{
+    label: string;
+    format: QuickFormat;
+    icon: string;
+    section: 'Text Style';
   }>;
   editorPlugins: NonNullable<MDXEditorProps['plugins']>;
 }

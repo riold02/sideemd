@@ -116,3 +116,29 @@ export const BLOCK_INSERT_OPTIONS = [
   },
   { label: 'Divider', markdown: '---', icon: '―', section: 'Advanced Layout' },
 ] as const;
+
+export const QUICK_MENU_FORMAT_OPTIONS = [
+  { label: 'Bold', format: 'bold', icon: 'B', section: 'Text Style' },
+  { label: 'Italic', format: 'italic', icon: 'I', section: 'Text Style' },
+  { label: 'Underline', format: 'underline', icon: 'U', section: 'Text Style' },
+  {
+    label: 'Strikethrough',
+    format: 'strikethrough',
+    icon: 'S',
+    section: 'Text Style',
+  },
+  { label: 'Code', format: 'code', icon: '</>', section: 'Text Style' },
+  { label: 'Highlight', format: 'highlight', icon: '◐', section: 'Text Style' },
+  {
+    label: 'Superscript',
+    format: 'superscript',
+    icon: 'x²',
+    section: 'Text Style',
+  },
+  {
+    label: 'Subscript',
+    format: 'subscript',
+    icon: 'x₂',
+    section: 'Text Style',
+  },
+] as const;

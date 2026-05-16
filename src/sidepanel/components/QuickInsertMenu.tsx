@@ -1,0 +1,77 @@
+import type { QuickFormat } from '../utils/editorFormat';
+
+interface BlockOption {
+  label: string;
+  markdown: string;
+  icon: string;
+  section: string;
+}
+
+interface FormatOption {
+  label: string;
+  format: QuickFormat;
+  icon: string;
+  section: string;
+}
+
+interface Props {
+  blockOptions: readonly BlockOption[];
+  formatOptions: readonly FormatOption[];
+  onInsertBlock: (markdown: string) => void;
+  onApplyFormat: (format: QuickFormat) => void;
+}
+
+const sectionOrder = [
+  'Text Style',
+  'Basic Text',
+  'Lists',
+  'Advanced Layout',
+] as const;
+
+export default function QuickInsertMenu({
+  blockOptions,
+  formatOptions,
+  onInsertBlock,
+  onApplyFormat,
+}: Props) {
+  const allOptions: Array<
+    | { kind: 'format'; option: FormatOption }
+    | { kind: 'block'; option: BlockOption }
+  > = [
+    ...formatOptions.map((option) => ({ kind: 'format' as const, option })),
+    ...blockOptions.map((option) => ({ kind: 'block' as const, option })),
+  ];
+
+  return (
+    <div className="block-insert-menu" role="menu">
+      {sectionOrder.map((section) => {
+        const options = allOptions.filter(
+          (entry) => entry.option.section === section
+        );
+        if (options.length === 0) return null;
+        return (
+          <div className="block-insert-group" key={section}>
+            <div className="block-insert-group-title">{section}</div>
+            {options.map((entry) => (
+              <button
+                key={`${entry.kind}-${entry.option.label}`}
+                type="button"
+                onClick={() =>
+                  entry.kind === 'format'
+                    ? onApplyFormat(entry.option.format)
+                    : onInsertBlock(entry.option.markdown)
+                }
+                role="menuitem"
+              >
+                <span className="block-option-icon" aria-hidden>
+                  {entry.option.icon}
+                </span>
+                <span>{entry.option.label}</span>
+              </button>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

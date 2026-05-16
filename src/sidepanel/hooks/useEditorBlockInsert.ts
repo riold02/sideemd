@@ -1,4 +1,9 @@
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
 import type React from 'react';
 import type { Note } from '../../lib/types';
@@ -6,6 +11,7 @@ import {
   insertMarkdownAfterBlock,
   resolveBlockInsertHover,
 } from '../utils/markdown';
+import { applyQuickFormat, type QuickFormat } from '../utils/editorFormat';
 
 interface Params {
   editorShellRef: React.RefObject<HTMLDivElement>;
@@ -79,6 +85,25 @@ export function useEditorBlockInsert({
     });
   }
 
+  function openQuickMenuFromElement(targetElement: Element) {
+    const shell = editorShellRef.current;
+    if (!shell) return;
+    const hoverTarget = resolveBlockInsertHover(targetElement, shell);
+    if (!hoverTarget) return;
+    const shellRect = shell.getBoundingClientRect();
+    const anchorRect = hoverTarget.anchor.getBoundingClientRect();
+    setBlockInsertTarget({
+      top: anchorRect.top - shellRect.top + anchorRect.height / 2,
+      signature: hoverTarget.signature,
+    });
+    setIsBlockMenuOpen(true);
+  }
+
+  function closeQuickMenu() {
+    setIsBlockMenuOpen(false);
+    setBlockInsertTarget(null);
+  }
+
   function insertBlockBelowCurrentTarget(markdown: string) {
     if (!selectedNote || !blockInsertTarget) return;
     const nextMarkdown = insertMarkdownAfterBlock(
@@ -88,7 +113,36 @@ export function useEditorBlockInsert({
     );
     updateNote(selectedNote.id, { contentMarkdown: nextMarkdown });
     editorRef.current?.setMarkdown(nextMarkdown);
-    setIsBlockMenuOpen(false);
+    closeQuickMenu();
+  }
+
+  function applyQuickFormatFromMenu(format: QuickFormat) {
+    if (!editorRef.current) return;
+    applyQuickFormat(editorRef.current, format);
+    closeQuickMenu();
+  }
+
+  function handleEditorKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== '/' || !editorShellRef.current) return;
+    if (!(event.target instanceof Element)) return;
+    const editableBlock = event.target.closest(
+      'p,h1,h2,h3,h4,h5,h6,li,blockquote'
+    );
+    if (!editableBlock || !editorShellRef.current.contains(editableBlock)) {
+      return;
+    }
+    const blockText = (editableBlock.textContent ?? '').trim();
+    if (blockText.length > 0) return;
+
+    if (isBlockMenuOpen) {
+      event.preventDefault();
+      editorRef.current?.insertMarkdown('/');
+      closeQuickMenu();
+      return;
+    }
+
+    event.preventDefault();
+    openQuickMenuFromElement(editableBlock);
   }
 
   return {
@@ -97,6 +151,10 @@ export function useEditorBlockInsert({
     blockInsertTarget,
     setBlockInsertTarget,
     handleEditorMouseMove,
+    handleEditorKeyDown,
     insertBlockBelowCurrentTarget,
+    applyQuickFormatFromMenu,
+    openQuickMenuFromElement,
+    closeQuickMenu,
   };
 }

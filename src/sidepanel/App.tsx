@@ -5,7 +5,12 @@ import { ChromeStorageRepository } from '../lib/storage';
 import Tabline from './components/Tabline';
 import HomeView from './components/HomeView';
 import EditorView from './components/EditorView';
-import { BLOCK_INSERT_OPTIONS, HOME_TAB, editorPlugins } from './editorConfig';
+import {
+  BLOCK_INSERT_OPTIONS,
+  HOME_TAB,
+  QUICK_MENU_FORMAT_OPTIONS,
+  editorPlugins,
+} from './editorConfig';
 import { useEditorBlockInsert } from './hooks/useEditorBlockInsert';
 import { useSidepanelState } from './hooks/useSidepanelState';
 import { createNoteSnippet, formatNoteDate } from './utils/markdown';
@@ -49,6 +54,8 @@ export default function App() {
     setBlockInsertTarget,
     handleEditorMouseMove,
     insertBlockBelowCurrentTarget,
+    applyQuickFormatFromMenu,
+    handleEditorKeyDown,
   } = useEditorBlockInsert({
     editorShellRef,
     editorRef,
@@ -130,6 +137,8 @@ export default function App() {
       setIsBlockMenuOpen,
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
+      applyQuickFormatFromMenu,
+      handleEditorKeyDown,
       setError,
     }),
     [
@@ -138,6 +147,8 @@ export default function App() {
       setIsBlockMenuOpen,
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
+      applyQuickFormatFromMenu,
+      handleEditorKeyDown,
       setError,
     ]
   );
@@ -147,6 +158,7 @@ export default function App() {
       editorRef,
       editorShellRef,
       blockInsertOptions: BLOCK_INSERT_OPTIONS,
+      formatOptions: QUICK_MENU_FORMAT_OPTIONS,
       editorPlugins,
     }),
     [editorRef, editorShellRef]
