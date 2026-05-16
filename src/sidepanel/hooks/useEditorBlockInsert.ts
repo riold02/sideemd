@@ -37,11 +37,21 @@ export function useEditorBlockInsert({
       event.target instanceof Element
         ? event.target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,table,hr')
         : null;
+    const controlElement =
+      event.target instanceof Element
+        ? event.target.closest(
+            '.block-insert-control, .block-insert-menu, .block-insert-button'
+          )
+        : null;
     if (
       !targetElement ||
       !shell.contains(targetElement) ||
       !isEditableBlockElement(targetElement)
     ) {
+      if (controlElement && shell.contains(controlElement)) {
+        // Preserve current target when moving from block text to insert controls.
+        return;
+      }
       if (!isBlockMenuOpen) setBlockInsertTarget(null);
       return;
     }
