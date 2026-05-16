@@ -4,8 +4,7 @@ import type React from 'react';
 import type { Note } from '../../lib/types';
 import {
   insertMarkdownAfterBlock,
-  isEditableBlockElement,
-  normalizeBlockText,
+  resolveBlockInsertHover,
 } from '../utils/markdown';
 
 interface Params {
@@ -54,21 +53,17 @@ export function useEditorBlockInsert({
     const shell = editorShellRef.current;
     if (!shell) return;
     if (isBlockMenuOpen) return;
-    const targetElement =
-      event.target instanceof Element
-        ? event.target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,table,hr')
-        : null;
     const controlElement =
       event.target instanceof Element
         ? event.target.closest(
             '.block-insert-control, .block-insert-menu, .block-insert-button'
           )
         : null;
-    if (
-      !targetElement ||
-      !shell.contains(targetElement) ||
-      !isEditableBlockElement(targetElement)
-    ) {
+    const hoverTarget =
+      event.target instanceof Element
+        ? resolveBlockInsertHover(event.target, shell)
+        : null;
+    if (!hoverTarget) {
       if (controlElement && shell.contains(controlElement)) {
         // Preserve current target when moving from block text to insert controls.
         return;
@@ -76,15 +71,11 @@ export function useEditorBlockInsert({
       if (!isBlockMenuOpen) setBlockInsertTarget(null);
       return;
     }
-    const signature = normalizeBlockText(
-      targetElement.textContent ?? targetElement.tagName.toLowerCase()
-    );
-    if (!signature) return;
     const shellRect = shell.getBoundingClientRect();
-    const blockRect = targetElement.getBoundingClientRect();
+    const anchorRect = hoverTarget.anchor.getBoundingClientRect();
     setBlockInsertTarget({
-      top: blockRect.top - shellRect.top + blockRect.height / 2,
-      signature,
+      top: anchorRect.top - shellRect.top + anchorRect.height / 2,
+      signature: hoverTarget.signature,
     });
   }
 

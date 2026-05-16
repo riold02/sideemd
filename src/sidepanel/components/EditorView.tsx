@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { MDXEditor } from '@mdxeditor/editor';
 import type { KeyboardEvent } from 'react';
-import { normalizeBlockText } from '../utils/markdown';
+import { resolveBlockInsertHover } from '../utils/markdown';
 import type {
   EditorViewActions,
   EditorViewConfig,
@@ -43,15 +43,16 @@ export default function EditorView({ state, actions, config }: Props) {
 
   function openBlockInsertFromElement(targetElement: Element) {
     if (!editorShellRef.current || !selectedNote) return;
-    const signature = normalizeBlockText(
-      targetElement.textContent ?? targetElement.tagName.toLowerCase()
+    const hoverTarget = resolveBlockInsertHover(
+      targetElement,
+      editorShellRef.current
     );
-    if (!signature) return;
+    if (!hoverTarget) return;
     const shellRect = editorShellRef.current.getBoundingClientRect();
-    const blockRect = targetElement.getBoundingClientRect();
+    const anchorRect = hoverTarget.anchor.getBoundingClientRect();
     setBlockInsertTarget({
-      top: blockRect.top - shellRect.top + blockRect.height / 2,
-      signature,
+      top: anchorRect.top - shellRect.top + anchorRect.height / 2,
+      signature: hoverTarget.signature,
     });
     setIsBlockMenuOpen(true);
   }
