@@ -1,7 +1,7 @@
 import {
   useEffect,
+  useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
@@ -9,6 +9,8 @@ import type React from 'react';
 import type { Note } from '../../lib/types';
 import {
   insertMarkdownAfterBlock,
+  isEmptyBlockSignature,
+  normalizeBlockText,
   resolveBlockInsertHover,
 } from '../utils/markdown';
 import { applyQuickFormat, type QuickFormat } from '../utils/editorFormat';
@@ -34,6 +36,8 @@ export function useEditorBlockInsert({
     signature: string;
   } | null>(null);
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
+  const isBlockMenuOpenRef = useRef(isBlockMenuOpen);
+  isBlockMenuOpenRef.current = isBlockMenuOpen;
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -54,6 +58,54 @@ export function useEditorBlockInsert({
       window.removeEventListener('mousedown', handlePointerDown);
     };
   }, [isBlockMenuOpen]);
+
+  useEffect(() => {
+    function handleSlashKey(event: KeyboardEvent) {
+      const shell = editorShellRef.current;
+      if (!shell || event.key !== '/' || event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      const target =
+        event.target instanceof Element
+          ? event.target
+          : document.activeElement instanceof Element
+            ? document.activeElement
+            : null;
+      if (!target) return;
+
+      const editableBlock = target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote');
+      if (!editableBlock || !shell.contains(editableBlock)) return;
+
+      const blockText = normalizeBlockText(editableBlock.textContent ?? '');
+      if (blockText.length > 0) return;
+
+      if (isBlockMenuOpenRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
+        editorRef.current?.insertMarkdown('/');
+        setIsBlockMenuOpen(false);
+        setBlockInsertTarget(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      const hoverTarget = resolveBlockInsertHover(editableBlock, shell);
+      if (!hoverTarget) return;
+      const shellRect = shell.getBoundingClientRect();
+      const anchorRect = hoverTarget.anchor.getBoundingClientRect();
+      setBlockInsertTarget({
+        top: anchorRect.top - shellRect.top + anchorRect.height / 2,
+        signature: hoverTarget.signature,
+      });
+      setIsBlockMenuOpen(true);
+    }
+
+    const shell = editorShellRef.current;
+    if (!shell) return;
+    shell.addEventListener('keydown', handleSlashKey, true);
+    return () => shell.removeEventListener('keydown', handleSlashKey, true);
+  }, [editorRef, editorShellRef]);
 
   function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     const shell = editorShellRef.current;
@@ -106,6 +158,16 @@ export function useEditorBlockInsert({
 
   function insertBlockBelowCurrentTarget(markdown: string) {
     if (!selectedNote || !blockInsertTarget) return;
+    if (
+      isEmptyBlockSignature(blockInsertTarget.signature) &&
+      editorRef.current
+    ) {
+      editorRef.current.insertMarkdown(markdown);
+      const nextMarkdown = editorRef.current.getMarkdown();
+      updateNote(selectedNote.id, { contentMarkdown: nextMarkdown });
+      closeQuickMenu();
+      return;
+    }
     const nextMarkdown = insertMarkdownAfterBlock(
       selectedNote.contentMarkdown,
       blockInsertTarget.signature,
@@ -122,36 +184,12 @@ export function useEditorBlockInsert({
     closeQuickMenu();
   }
 
-  function handleEditorKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (event.key !== '/' || !editorShellRef.current) return;
-    if (!(event.target instanceof Element)) return;
-    const editableBlock = event.target.closest(
-      'p,h1,h2,h3,h4,h5,h6,li,blockquote'
-    );
-    if (!editableBlock || !editorShellRef.current.contains(editableBlock)) {
-      return;
-    }
-    const blockText = (editableBlock.textContent ?? '').trim();
-    if (blockText.length > 0) return;
-
-    if (isBlockMenuOpen) {
-      event.preventDefault();
-      editorRef.current?.insertMarkdown('/');
-      closeQuickMenu();
-      return;
-    }
-
-    event.preventDefault();
-    openQuickMenuFromElement(editableBlock);
-  }
-
   return {
     isBlockMenuOpen,
     setIsBlockMenuOpen,
     blockInsertTarget,
     setBlockInsertTarget,
     handleEditorMouseMove,
-    handleEditorKeyDown,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
     openQuickMenuFromElement,

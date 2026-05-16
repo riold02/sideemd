@@ -18,7 +18,6 @@ export default function EditorView({ state, actions, config }: Props) {
   const {
     updateNote,
     handleEditorMouseMove,
-    handleEditorKeyDown,
     setIsBlockMenuOpen,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
@@ -57,7 +56,6 @@ export default function EditorView({ state, actions, config }: Props) {
             className="visual-editor-shell"
             ref={editorShellRef}
             onMouseMove={handleEditorMouseMove}
-            onKeyDown={handleEditorKeyDown}
             onMouseLeave={() => {
               if (!isBlockMenuOpen) setIsBlockMenuOpen(false);
             }}

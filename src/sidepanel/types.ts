@@ -61,7 +61,6 @@ export interface EditorViewActions {
   >;
   insertBlockBelowCurrentTarget: (md: string) => void;
   applyQuickFormatFromMenu: (format: QuickFormat) => void;
-  handleEditorKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   setError: (value: string) => void;
 }
 

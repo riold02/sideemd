@@ -55,7 +55,6 @@ export default function App() {
     handleEditorMouseMove,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
-    handleEditorKeyDown,
   } = useEditorBlockInsert({
     editorShellRef,
     editorRef,
@@ -138,7 +137,6 @@ export default function App() {
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
-      handleEditorKeyDown,
       setError,
     }),
     [
@@ -148,7 +146,6 @@ export default function App() {
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
-      handleEditorKeyDown,
       setError,
     ]
   );

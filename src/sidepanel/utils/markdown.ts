@@ -22,12 +22,19 @@ export function isEditableBlockElement(element: Element): boolean {
   ].includes(element.tagName);
 }
 
+export function isEmptyBlockSignature(signature: string): boolean {
+  return signature.startsWith('__empty:');
+}
+
 function getBlockInsertSignature(block: Element): string {
   const text = normalizeBlockText(block.textContent ?? '');
   if (text) return text;
   if (block.tagName === 'BLOCKQUOTE') return '__blockquote__';
   if (block.tagName === 'PRE') return '__pre__';
   if (block.tagName === 'HR') return '__hr__';
+  if (isEditableBlockElement(block)) {
+    return `__empty:${block.tagName.toLowerCase()}__`;
+  }
   return '';
 }
 

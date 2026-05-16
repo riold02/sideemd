@@ -4,6 +4,21 @@ import {
   resolveBlockInsertHover,
 } from '../sidepanel/utils/markdown';
 
+describe('resolveBlockInsertHover on empty blocks', () => {
+  it('returns a signature for an empty paragraph', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<p id="empty"></p>';
+    document.body.appendChild(root);
+
+    const paragraph = root.querySelector('#empty') as HTMLParagraphElement;
+    const hoverTarget = resolveBlockInsertHover(paragraph, root);
+
+    expect(hoverTarget?.signature).toBe('__empty:p__');
+
+    root.remove();
+  });
+});
+
 describe('resolveBlockInsertHover', () => {
   it('anchors the insert control to the hovered paragraph inside a quote', () => {
     const root = document.createElement('div');
