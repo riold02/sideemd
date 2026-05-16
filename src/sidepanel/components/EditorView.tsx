@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { MDXEditor } from '@mdxeditor/editor';
 import QuickInsertMenu from './QuickInsertMenu';
+import SelectionFormatToolbar from './SelectionFormatToolbar';
 import type {
   EditorViewActions,
   EditorViewConfig,
@@ -14,13 +15,20 @@ interface Props {
 }
 
 export default function EditorView({ state, actions, config }: Props) {
-  const { selectedNote, isBlockMenuOpen, blockInsertTarget, error } = state;
+  const {
+    selectedNote,
+    isBlockMenuOpen,
+    blockInsertTarget,
+    selectionToolbar,
+    error,
+  } = state;
   const {
     updateNote,
     handleEditorMouseMove,
     setIsBlockMenuOpen,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
+    applySelectionFormat,
     setError,
   } = actions;
   const {
@@ -60,6 +68,15 @@ export default function EditorView({ state, actions, config }: Props) {
               if (!isBlockMenuOpen) setIsBlockMenuOpen(false);
             }}
           >
+            {selectionToolbar ? (
+              <SelectionFormatToolbar
+                top={selectionToolbar.top}
+                left={selectionToolbar.left}
+                options={formatOptions}
+                onApplyFormat={applySelectionFormat}
+              />
+            ) : null}
+
             {blockInsertTarget ? (
               <div
                 className="block-insert-control"

@@ -46,6 +46,7 @@ export interface EditorViewState {
   selectedNote: Note | null;
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;
+  selectionToolbar: { top: number; left: number } | null;
   error: string;
 }
 
@@ -61,6 +62,7 @@ export interface EditorViewActions {
   >;
   insertBlockBelowCurrentTarget: (md: string) => void;
   applyQuickFormatFromMenu: (format: QuickFormat) => void;
+  applySelectionFormat: (format: QuickFormat) => void;
   setError: (value: string) => void;
 }
 

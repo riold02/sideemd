@@ -12,6 +12,7 @@ import {
   editorPlugins,
 } from './editorConfig';
 import { useEditorBlockInsert } from './hooks/useEditorBlockInsert';
+import { useSelectionFormatToolbar } from './hooks/useSelectionFormatToolbar';
 import { useSidepanelState } from './hooks/useSidepanelState';
 import { createNoteSnippet, formatNoteDate } from './utils/markdown';
 
@@ -60,6 +61,12 @@ export default function App() {
     editorRef,
     selectedNote,
     updateNote,
+  });
+
+  const { selectionToolbar, applySelectionFormat } = useSelectionFormatToolbar({
+    noteId: selectedNote?.id,
+    editorShellRef,
+    editorRef,
   });
 
   const tablineState = useMemo(
@@ -124,9 +131,10 @@ export default function App() {
       selectedNote,
       isBlockMenuOpen,
       blockInsertTarget,
+      selectionToolbar,
       error,
     }),
-    [selectedNote, isBlockMenuOpen, blockInsertTarget, error]
+    [selectedNote, isBlockMenuOpen, blockInsertTarget, selectionToolbar, error]
   );
 
   const editorViewActions = useMemo(
@@ -137,6 +145,7 @@ export default function App() {
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
+      applySelectionFormat,
       setError,
     }),
     [
@@ -146,6 +155,7 @@ export default function App() {
       setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
       applyQuickFormatFromMenu,
+      applySelectionFormat,
       setError,
     ]
   );
