@@ -12,10 +12,12 @@ import {
   thematicBreakPlugin,
   type MDXEditorProps,
 } from '@mdxeditor/editor';
+import { formatCommandPlugin } from './plugins/formatCommandPlugin';
 
 export const HOME_TAB = 'home';
 
 export const editorPlugins: NonNullable<MDXEditorProps['plugins']> = [
+  formatCommandPlugin(),
   headingsPlugin(),
   frontmatterPlugin(),
   listsPlugin(),
@@ -128,6 +130,7 @@ export const QUICK_MENU_FORMAT_OPTIONS = [
     section: 'Text Style',
   },
   { label: 'Code', format: 'code', icon: '</>', section: 'Text Style' },
+  { label: 'Border', format: 'border', icon: '▢', section: 'Text Style' },
   { label: 'Highlight', format: 'highlight', icon: '◐', section: 'Text Style' },
   {
     label: 'Superscript',

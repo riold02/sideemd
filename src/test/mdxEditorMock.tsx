@@ -1,6 +1,10 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { vi } from 'vitest';
 
+vi.mock('../sidepanel/plugins/formatCommandPlugin', () => ({
+  formatCommandPlugin: vi.fn(() => () => ({})),
+}));
+
 vi.mock('@mdxeditor/editor', () => ({
   MDXEditor: forwardRef(
     (
