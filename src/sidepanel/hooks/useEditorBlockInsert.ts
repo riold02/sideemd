@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -10,6 +11,7 @@ import type { Note } from '../../lib/types';
 import {
   insertMarkdownAfterBlock,
   isEmptyBlockSignature,
+  isSlashTriggerBlock,
   normalizeBlockText,
   resolveBlockInsertHover,
 } from '../utils/markdown';
@@ -59,7 +61,17 @@ export function useEditorBlockInsert({
     };
   }, [isBlockMenuOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!selectedNote) return;
+
+    function getEditorKeyTarget(): HTMLElement | null {
+      const shell = editorShellRef.current;
+      if (!shell) return null;
+      return (
+        shell.querySelector<HTMLElement>('.visual-editor-content') ?? shell
+      );
+    }
+
     function handleSlashKey(event: KeyboardEvent) {
       const shell = editorShellRef.current;
       if (!shell || event.key !== '/' || event.defaultPrevented) return;
@@ -77,11 +89,11 @@ export function useEditorBlockInsert({
       if (!editableBlock || !shell.contains(editableBlock)) return;
 
       const blockText = normalizeBlockText(editableBlock.textContent ?? '');
-      if (blockText.length > 0) return;
+      if (!isSlashTriggerBlock(blockText)) return;
 
       if (isBlockMenuOpenRef.current) {
         event.preventDefault();
-        event.stopPropagation();
+        event.stopImmediatePropagation();
         editorRef.current?.insertMarkdown('/');
         setIsBlockMenuOpen(false);
         setBlockInsertTarget(null);
@@ -89,7 +101,7 @@ export function useEditorBlockInsert({
       }
 
       event.preventDefault();
-      event.stopPropagation();
+      event.stopImmediatePropagation();
       const hoverTarget = resolveBlockInsertHover(editableBlock, shell);
       if (!hoverTarget) return;
       const shellRect = shell.getBoundingClientRect();
@@ -101,11 +113,25 @@ export function useEditorBlockInsert({
       setIsBlockMenuOpen(true);
     }
 
-    const shell = editorShellRef.current;
-    if (!shell) return;
-    shell.addEventListener('keydown', handleSlashKey, true);
-    return () => shell.removeEventListener('keydown', handleSlashKey, true);
-  }, [editorRef, editorShellRef]);
+    let keyTarget: HTMLElement | null = null;
+    let rafId = 0;
+
+    function bindKeyTarget() {
+      if (keyTarget) {
+        keyTarget.removeEventListener('keydown', handleSlashKey, true);
+      }
+      keyTarget = getEditorKeyTarget();
+      keyTarget?.addEventListener('keydown', handleSlashKey, true);
+    }
+
+    bindKeyTarget();
+    rafId = requestAnimationFrame(bindKeyTarget);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      keyTarget?.removeEventListener('keydown', handleSlashKey, true);
+    };
+  }, [selectedNote?.id, editorRef, editorShellRef]);
 
   function handleEditorMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     const shell = editorShellRef.current;

@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   insertMarkdownAfterBlock,
+  isSlashTriggerBlock,
   resolveBlockInsertHover,
 } from '../sidepanel/utils/markdown';
+
+describe('isSlashTriggerBlock', () => {
+  it('treats empty and lone-slash lines as slash triggers', () => {
+    expect(isSlashTriggerBlock('')).toBe(true);
+    expect(isSlashTriggerBlock('/')).toBe(true);
+    expect(isSlashTriggerBlock('hello')).toBe(false);
+  });
+});
 
 describe('resolveBlockInsertHover on empty blocks', () => {
   it('returns a signature for an empty paragraph', () => {

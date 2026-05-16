@@ -26,6 +26,11 @@ export function isEmptyBlockSignature(signature: string): boolean {
   return signature.startsWith('__empty:');
 }
 
+export function isSlashTriggerBlock(text: string): boolean {
+  const normalized = normalizeBlockText(text);
+  return normalized.length === 0 || normalized === '/';
+}
+
 function getBlockInsertSignature(block: Element): string {
   const text = normalizeBlockText(block.textContent ?? '');
   if (text) return text;
