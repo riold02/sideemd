@@ -55,6 +55,9 @@ export interface EditorViewActions {
   ) => void;
   handleEditorMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
   setIsBlockMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setBlockInsertTarget: React.Dispatch<
+    React.SetStateAction<{ top: number; signature: string } | null>
+  >;
   insertBlockBelowCurrentTarget: (md: string) => void;
   setError: (value: string) => void;
 }
@@ -62,6 +65,11 @@ export interface EditorViewActions {
 export interface EditorViewConfig {
   editorRef: React.RefObject<MDXEditorMethods>;
   editorShellRef: React.RefObject<HTMLDivElement>;
-  blockInsertOptions: ReadonlyArray<{ label: string; markdown: string }>;
+  blockInsertOptions: ReadonlyArray<{
+    label: string;
+    markdown: string;
+    icon: string;
+    section: 'Basic Text' | 'Lists' | 'Advanced Layout';
+  }>;
   editorPlugins: NonNullable<MDXEditorProps['plugins']>;
 }

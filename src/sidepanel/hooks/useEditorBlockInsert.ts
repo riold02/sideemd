@@ -104,6 +104,7 @@ export function useEditorBlockInsert({
     isBlockMenuOpen,
     setIsBlockMenuOpen,
     blockInsertTarget,
+    setBlockInsertTarget,
     handleEditorMouseMove,
     insertBlockBelowCurrentTarget,
   };

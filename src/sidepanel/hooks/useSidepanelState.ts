@@ -121,7 +121,7 @@ export function useSidepanelState(repository: StorageRepository) {
     noteId: string,
     updates: Partial<Pick<Note, 'title' | 'contentMarkdown'>>
   ) {
-    patchState(withUpdatedNote(state, noteId, updates));
+    setState((prev) => withUpdatedNote(prev, noteId, updates));
   }
 
   async function handleCreateNote() {

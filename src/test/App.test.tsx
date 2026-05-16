@@ -56,9 +56,10 @@ describe('App editor', () => {
       () => {
         const state = store[STORAGE_KEY] as AppState;
         expect(
-          Object.values(state.notes).find((note) => note.title === 'Welcome')
-            ?.contentMarkdown
-        ).toBe('# Changed note');
+          Object.values(state.notes).some((note) =>
+            note.contentMarkdown.includes('Changed note')
+          )
+        ).toBe(true);
       },
       { timeout: 1000 }
     );

@@ -46,6 +46,7 @@ export default function App() {
     isBlockMenuOpen,
     setIsBlockMenuOpen,
     blockInsertTarget,
+    setBlockInsertTarget,
     handleEditorMouseMove,
     insertBlockBelowCurrentTarget,
   } = useEditorBlockInsert({
@@ -127,6 +128,7 @@ export default function App() {
       updateNote,
       handleEditorMouseMove,
       setIsBlockMenuOpen,
+      setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
       setError,
     }),
@@ -134,6 +136,7 @@ export default function App() {
       updateNote,
       handleEditorMouseMove,
       setIsBlockMenuOpen,
+      setBlockInsertTarget,
       insertBlockBelowCurrentTarget,
       setError,
     ]

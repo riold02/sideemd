@@ -262,21 +262,42 @@ ul {
 .visual-editor-content ul,
 .visual-editor-content ol {
   list-style: initial;
-  margin: 0.5rem 0;
+  margin: 0.8rem 0;
   padding-left: 1.25rem;
 }
 
 .visual-editor-content li {
   display: list-item;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
 }
 
 .visual-editor-content input[type="checkbox"] {
+  appearance: none;
   width: 16px;
   height: 16px;
-  vertical-align: middle;
-  accent-color: #1f6feb;
+  border: 1.5px solid #9aa9ba;
+  border-radius: 5px;
+  background: #fff;
+  vertical-align: -2px;
   margin-right: 0.5rem;
+  position: relative;
+}
+
+.visual-editor-content input[type="checkbox"]:checked {
+  background: #1f6feb;
+  border-color: #1f6feb;
+}
+
+.visual-editor-content input[type="checkbox"]:checked::after {
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  content: "";
 }
 
 .note-list li::before {
@@ -399,12 +420,16 @@ button,
   outline: none;
 }
 
-.title-input {
-  width: 100%;
-  border: 1px solid #b9c1cc;
-  border-radius: 8px;
-  padding: 8px;
-  background: #fff;
+.editor-breadcrumb {
+  margin: 2px 2px 0;
+  color: #788496;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.editor-breadcrumb span {
+  margin: 0 5px;
+  color: #99a3b2;
 }
 
 .notes-header {
@@ -441,6 +466,29 @@ button,
   font: 15px/1.62 "Iowan Old Style", "Palatino Linotype", serif;
 }
 
+.visual-editor-content > * + * {
+  margin-top: 0.95rem;
+}
+
+.visual-editor-content h1,
+.visual-editor-content h2,
+.visual-editor-content h3,
+.visual-editor-content h4,
+.visual-editor-content h5,
+.visual-editor-content h6 {
+  margin: 1.25rem 0 0.5rem;
+}
+
+.visual-editor-content h1:first-child {
+  margin-top: 0.2rem;
+}
+
+.visual-editor-content :not(pre) > code {
+  display: inline;
+  margin: 0;
+  padding: 0.08rem 0.34rem;
+}
+
 .visual-editor-content:focus {
   outline: none;
 }
@@ -474,20 +522,47 @@ button,
   top: 34px;
   right: 0;
   display: grid;
-  min-width: 170px;
+  min-width: 225px;
   border: 1px solid #b9c1cc;
   border-radius: 8px;
   background: #fff;
-  padding: 6px;
+  padding: 4px;
   box-shadow: 0 10px 26px rgba(30, 31, 36, 0.18);
 }
 
+.block-insert-group + .block-insert-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #edf1f6;
+}
+
+.block-insert-group-title {
+  padding: 6px 9px 4px;
+  color: #6f7b89;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .block-insert-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   padding: 7px 9px;
   text-align: left;
+  width: 100%;
+}
+
+.block-option-icon {
+  width: 22px;
+  color: #556274;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .block-insert-menu button:hover {
