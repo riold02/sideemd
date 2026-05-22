@@ -1,7 +1,12 @@
 import { APP_NAME } from './branding';
-import { AppState, SCHEMA_VERSION } from './types';
+import {
+  ActivityEntry,
+  AppState,
+  SCHEMA_VERSION,
+  TrackingSettings,
+} from './types';
 
-export const SEED_DATA_VERSION = 1;
+export const SEED_DATA_VERSION = 2;
 export const WELCOME_MARKDOWN = `# ${APP_NAME}\n\nStart taking notes.`;
 export const MARKDOWN_SHOWCASE_TITLE = 'Markdown Syntax Showcase';
 export const MARKDOWN_SHOWCASE_MARKDOWN = `---
@@ -91,11 +96,56 @@ export function createId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export const DEFAULT_TRACKING_SETTINGS: TrackingSettings = {
+  enabled: true,
+  paused: false,
+  allowedDomains: [],
+  blockedDomains: ['mail.google.com', 'bank', 'payment', 'login', 'chat'],
+  blockSensitivePages: true,
+};
+
+export function createActivityEntry(
+  action: ActivityEntry['action'],
+  objectType: ActivityEntry['objectType'],
+  objectId: string,
+  objectLabel: string
+): ActivityEntry {
+  return {
+    id: createId('activity'),
+    action,
+    objectType,
+    objectId,
+    objectLabel,
+    createdAt: nowIso(),
+  };
+}
+
+export function appendActivity(
+  state: AppState,
+  entry: ActivityEntry
+): AppState {
+  const duplicate = state.activityLog[0];
+  if (
+    duplicate?.action === entry.action &&
+    duplicate.objectId === entry.objectId &&
+    Date.parse(entry.createdAt) - Date.parse(duplicate.createdAt) < 5000
+  ) {
+    return {
+      ...state,
+      activityLog: [
+        { ...duplicate, createdAt: entry.createdAt },
+        ...state.activityLog.slice(1),
+      ],
+    };
+  }
+
+  return { ...state, activityLog: [entry, ...state.activityLog].slice(0, 200) };
+}
+
 export function createDefaultState(): AppState {
   const timestamp = nowIso();
   const notebookId = createId('book');
   const welcomeNoteId = createId('note');
-  const showcaseNoteId = createId('note');
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -109,15 +159,6 @@ export function createDefaultState(): AppState {
       },
     },
     notes: {
-      [showcaseNoteId]: {
-        id: showcaseNoteId,
-        notebookId,
-        parentNoteId: null,
-        title: MARKDOWN_SHOWCASE_TITLE,
-        contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      },
       [welcomeNoteId]: {
         id: welcomeNoteId,
         notebookId,
@@ -130,8 +171,12 @@ export function createDefaultState(): AppState {
     },
     notebookOrder: [notebookId],
     noteOrderByNotebook: {
-      [notebookId]: [showcaseNoteId, welcomeNoteId],
+      [notebookId]: [welcomeNoteId],
     },
     childOrderByNote: {},
+    researchLogs: {},
+    researchLogOrder: [],
+    activityLog: [],
+    trackingSettings: structuredClone(DEFAULT_TRACKING_SETTINGS),
   };
 }

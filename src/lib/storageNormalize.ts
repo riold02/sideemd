@@ -1,13 +1,69 @@
 import { normalizeNoteLinksInMarkdown } from './noteLinks';
-import { AppState, SCHEMA_VERSION } from './types';
 import {
+  ActivityEntry,
+  AppState,
+  ResearchLog,
+  SCHEMA_VERSION,
+  TrackingSettings,
+} from './types';
+import {
+  DEFAULT_TRACKING_SETTINGS,
   MARKDOWN_SHOWCASE_MARKDOWN,
   MARKDOWN_SHOWCASE_TITLE,
   SEED_DATA_VERSION,
   WELCOME_MARKDOWN,
-  createId,
-  nowIso,
 } from './state';
+
+function normalizeTrackingSettings(
+  settings: Partial<TrackingSettings> | undefined
+): TrackingSettings {
+  return {
+    ...DEFAULT_TRACKING_SETTINGS,
+    ...settings,
+    allowedDomains: Array.isArray(settings?.allowedDomains)
+      ? settings.allowedDomains.filter((domain) => typeof domain === 'string')
+      : [],
+    blockedDomains: Array.isArray(settings?.blockedDomains)
+      ? settings.blockedDomains.filter((domain) => typeof domain === 'string')
+      : [...DEFAULT_TRACKING_SETTINGS.blockedDomains],
+  };
+}
+
+function isResearchLog(value: unknown): value is ResearchLog {
+  if (!value || typeof value !== 'object') return false;
+  const log = value as ResearchLog;
+  return (
+    typeof log.id === 'string' &&
+    typeof log.query === 'string' &&
+    typeof log.website === 'string' &&
+    typeof log.url === 'string' &&
+    typeof log.pageTitle === 'string' &&
+    typeof log.researchedAt === 'string' &&
+    typeof log.personalNote === 'string'
+  );
+}
+
+function isActivity(value: unknown): value is ActivityEntry {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as ActivityEntry;
+  return (
+    typeof entry.id === 'string' &&
+    [
+      'note.created',
+      'note.updated',
+      'note.deleted',
+      'note.restored',
+      'research.created',
+      'research.deleted',
+      'research.cleared',
+      'tracking.updated',
+    ].includes(entry.action) &&
+    ['note', 'research', 'tracking'].includes(entry.objectType) &&
+    typeof entry.objectId === 'string' &&
+    typeof entry.objectLabel === 'string' &&
+    typeof entry.createdAt === 'string'
+  );
+}
 
 function reconcileHierarchy(state: AppState): AppState {
   const notes = { ...state.notes };
@@ -51,6 +107,10 @@ function reconcileHierarchy(state: AppState): AppState {
 
 export function normalizeState(state: AppState): AppState {
   let changed = false;
+  const legacyState = state as AppState & {
+    tasks?: unknown;
+    taskOrder?: unknown;
+  };
   let next: AppState = {
     ...state,
     schemaVersion: state.schemaVersion ?? 1,
@@ -58,7 +118,16 @@ export function normalizeState(state: AppState): AppState {
     notes: { ...state.notes },
     noteOrderByNotebook: { ...state.noteOrderByNotebook },
     childOrderByNote: { ...(state.childOrderByNote ?? {}) },
+    researchLogs: { ...(state.researchLogs ?? {}) },
+    researchLogOrder: [...(state.researchLogOrder ?? [])],
+    activityLog: [...(state.activityLog ?? [])],
+    trackingSettings: normalizeTrackingSettings(state.trackingSettings),
   };
+  if (legacyState.tasks || legacyState.taskOrder) {
+    delete (next as typeof legacyState).tasks;
+    delete (next as typeof legacyState).taskOrder;
+    changed = true;
+  }
 
   if (next.schemaVersion < SCHEMA_VERSION) {
     for (const [noteId, note] of Object.entries(next.notes)) {
@@ -68,6 +137,33 @@ export function normalizeState(state: AppState): AppState {
     }
     next.schemaVersion = SCHEMA_VERSION;
     next.childOrderByNote = next.childOrderByNote ?? {};
+    changed = true;
+  }
+
+  const normalizedResearchLogs = Object.fromEntries(
+    Object.entries(next.researchLogs).filter(([, log]) => isResearchLog(log))
+  );
+  if (
+    Object.keys(normalizedResearchLogs).length !==
+    Object.keys(next.researchLogs).length
+  ) {
+    next.researchLogs = normalizedResearchLogs;
+    changed = true;
+  }
+  const researchLogOrder = next.researchLogOrder.filter((id) =>
+    Boolean(next.researchLogs[id])
+  );
+  for (const id of Object.keys(next.researchLogs)) {
+    if (!researchLogOrder.includes(id)) researchLogOrder.push(id);
+  }
+  if (researchLogOrder.join('|') !== next.researchLogOrder.join('|')) {
+    next.researchLogOrder = researchLogOrder;
+    changed = true;
+  }
+
+  const activityLog = next.activityLog.filter(isActivity).slice(0, 200);
+  if (activityLog.length !== next.activityLog.length) {
+    next.activityLog = activityLog;
     changed = true;
   }
 
@@ -99,32 +195,30 @@ export function normalizeState(state: AppState): AppState {
   }
 
   if ((state.seedDataVersion ?? 0) < SEED_DATA_VERSION) {
-    const hasShowcase = Object.values(next.notes).some(
-      (note) => note.title === MARKDOWN_SHOWCASE_TITLE
-    );
-    const notebookId = next.notebookOrder[0];
+    for (const [noteId, note] of Object.entries(next.notes)) {
+      const hasUserState =
+        note.pinned ||
+        note.favorite ||
+        note.deletedAt ||
+        Boolean(note.tags?.length) ||
+        Boolean(next.childOrderByNote[noteId]?.length);
+      if (
+        note.title !== MARKDOWN_SHOWCASE_TITLE ||
+        note.contentMarkdown !== MARKDOWN_SHOWCASE_MARKDOWN ||
+        hasUserState
+      ) {
+        continue;
+      }
 
-    if (!hasShowcase && notebookId && next.notebooks[notebookId]) {
-      const timestamp = nowIso();
-      const noteId = createId('note');
-
-      next.notes[noteId] = {
-        id: noteId,
-        notebookId,
-        parentNoteId: null,
-        title: MARKDOWN_SHOWCASE_TITLE,
-        contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      };
-      next.noteOrderByNotebook[notebookId] = [
-        noteId,
-        ...(next.noteOrderByNotebook[notebookId] ?? []),
-      ];
-      next.notebooks[notebookId] = {
-        ...next.notebooks[notebookId],
-        updatedAt: timestamp,
-      };
+      delete next.notes[noteId];
+      for (const [notebookId, noteIds] of Object.entries(
+        next.noteOrderByNotebook
+      )) {
+        next.noteOrderByNotebook[notebookId] = noteIds.filter(
+          (id) => id !== noteId
+        );
+      }
+      delete next.childOrderByNote[noteId];
       changed = true;
     }
 

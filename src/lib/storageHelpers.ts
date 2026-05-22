@@ -52,6 +52,24 @@ export function removeNoteSubtree(state: AppState, noteId: string) {
   return root;
 }
 
+export function setNoteSubtreeDeleted(
+  state: AppState,
+  noteId: string,
+  deletedAt: string | null
+) {
+  const root = state.notes[noteId];
+  if (!root) return null;
+
+  for (const id of [noteId, ...collectDescendantIds(state, noteId)]) {
+    const note = state.notes[id];
+    if (!note) continue;
+    state.notes[id] = { ...note, deletedAt, updatedAt: nowIso() };
+  }
+
+  state.notebooks[root.notebookId].updatedAt = nowIso();
+  return root;
+}
+
 export function deleteNotebookFromState(
   state: AppState,
   notebookId: string

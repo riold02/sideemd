@@ -18,6 +18,27 @@ describe('import/export', () => {
     expect(parsed.notes.length).toBe(payload.notes.length);
   });
 
+  it('round trips workspace research and tracking data', () => {
+    const state = createDefaultState();
+    state.researchLogs.research_1 = {
+      id: 'research_1',
+      query: 'JSON export',
+      website: 'example.test',
+      url: 'https://example.test/export',
+      pageTitle: 'Export',
+      researchedAt: '2026-05-22T00:00:00.000Z',
+      personalNote: 'Keep research order.',
+    };
+    state.researchLogOrder = ['research_1'];
+    state.trackingSettings.paused = true;
+
+    const replaced = replaceImportedState(
+      parseImport(JSON.stringify(serializeState(state)))
+    );
+    expect(replaced.researchLogOrder).toEqual(['research_1']);
+    expect(replaced.trackingSettings.paused).toBe(true);
+  });
+
   it('merges imported data', () => {
     const current = createDefaultState();
     const imported = serializeState(createDefaultState());

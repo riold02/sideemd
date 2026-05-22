@@ -5,7 +5,17 @@ import { ChromeStorageRepository } from '../lib/storage';
 import Tabline from './components/Tabline';
 import HomeView from './components/HomeView';
 import EditorView from './components/EditorView';
-import { HOME_TAB } from './editorConfig';
+import DashboardView from './components/DashboardView';
+import ResearchView from './components/ResearchView';
+import ActivityView from './components/ActivityView';
+import TrackingSettingsView from './components/TrackingSettingsView';
+import {
+  ACTIVITY_TAB,
+  DASHBOARD_TAB,
+  HOME_TAB,
+  RESEARCH_TAB,
+  SETTINGS_TAB,
+} from './editorConfig';
 import { useEditorBlockInsert } from './hooks/useEditorBlockInsert';
 import { useEditorViewProps } from './hooks/useEditorViewProps';
 import { useSelectionFormatToolbar } from './hooks/useSelectionFormatToolbar';
@@ -28,6 +38,10 @@ export default function App() {
     activeNoteId,
     search,
     setSearch,
+    noteTagFilter,
+    setNoteTagFilter,
+    showTrash,
+    setShowTrash,
     loading,
     error,
     setError,
@@ -41,6 +55,13 @@ export default function App() {
     handleCreateNote,
     handleCreateSubnote,
     handleDeleteNote,
+    handleRestoreNote,
+    updateNoteMetadata,
+    handleCreateResearchLog,
+    handleDeleteResearchLog,
+    handleClearResearchLogs,
+    exportResearchLogs,
+    handleUpdateTrackingSettings,
     handleExport,
     handleImport,
     selectedNoteAncestors,
@@ -145,7 +166,7 @@ export default function App() {
       openNoteTab,
       closeNoteTab,
       handleCreateNote,
-      onHomeClick: () => setActiveTab(HOME_TAB),
+      onViewClick: setActiveTab,
       onCloseSidebar: () => window.close(),
     }),
     [openNoteTab, closeNoteTab, handleCreateNote, setActiveTab]
@@ -158,8 +179,24 @@ export default function App() {
       selectedNotebookId,
       isHomeMenuOpen,
       search,
+      noteTagFilter,
+      tags: [
+        ...new Set(
+          Object.values(state.notes).flatMap((note) => note.tags ?? [])
+        ),
+      ].sort(),
+      showTrash,
     }),
-    [filteredNotes, activeNoteId, selectedNotebookId, isHomeMenuOpen, search]
+    [
+      filteredNotes,
+      activeNoteId,
+      selectedNotebookId,
+      isHomeMenuOpen,
+      search,
+      noteTagFilter,
+      showTrash,
+      state.notes,
+    ]
   );
 
   const homeViewActions = useMemo(
@@ -167,19 +204,27 @@ export default function App() {
       openNoteTab,
       handleCreateNote,
       handleDeleteNote,
+      handleRestoreNote,
+      updateNoteMetadata,
       handleExport,
       handleImport,
       toggleHomeMenu: () => setIsHomeMenuOpen((value) => !value),
       setSearch,
+      setNoteTagFilter,
+      setShowTrash,
     }),
     [
       openNoteTab,
       handleCreateNote,
       handleDeleteNote,
+      handleRestoreNote,
+      updateNoteMetadata,
       handleExport,
       handleImport,
       setIsHomeMenuOpen,
       setSearch,
+      setNoteTagFilter,
+      setShowTrash,
     ]
   );
 
@@ -193,11 +238,30 @@ export default function App() {
   return (
     <div className="app-shell" data-color-mode="light">
       <Tabline state={tablineState} actions={tablineActions} />
-      {activeTab === HOME_TAB ? (
+      {activeTab === DASHBOARD_TAB ? (
+        <DashboardView state={state} onOpenView={setActiveTab} />
+      ) : activeTab === HOME_TAB ? (
         <HomeView
           state={homeViewState}
           actions={homeViewActions}
           formatters={homeViewFormatters}
+        />
+      ) : activeTab === RESEARCH_TAB ? (
+        <ResearchView
+          logs={state.researchLogOrder
+            .map((id) => state.researchLogs[id])
+            .filter(Boolean)}
+          onCreateLog={handleCreateResearchLog}
+          onDeleteLog={handleDeleteResearchLog}
+          onClearLogs={handleClearResearchLogs}
+          onExport={exportResearchLogs}
+        />
+      ) : activeTab === ACTIVITY_TAB ? (
+        <ActivityView entries={state.activityLog} />
+      ) : activeTab === SETTINGS_TAB ? (
+        <TrackingSettingsView
+          settings={state.trackingSettings}
+          onUpdate={handleUpdateTrackingSettings}
         />
       ) : (
         <EditorView
