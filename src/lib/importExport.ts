@@ -3,8 +3,12 @@ import {
   ExportPayload,
   Note,
   Notebook,
+  ResearchLog,
   SCHEMA_VERSION,
+  TrackingSettings,
 } from './types';
+import { DEFAULT_TRACKING_SETTINGS } from './state';
+import { normalizeState } from './storageNormalize';
 
 function isNotebook(value: unknown): value is Notebook {
   if (!value || typeof value !== 'object') {
@@ -39,6 +43,35 @@ function isNote(value: unknown): value is Note {
   );
 }
 
+function isResearchLog(value: unknown): value is ResearchLog {
+  if (!value || typeof value !== 'object') return false;
+  const log = value as ResearchLog;
+  return (
+    typeof log.id === 'string' &&
+    typeof log.query === 'string' &&
+    typeof log.website === 'string' &&
+    typeof log.url === 'string' &&
+    typeof log.pageTitle === 'string' &&
+    typeof log.researchedAt === 'string' &&
+    typeof log.personalNote === 'string'
+  );
+}
+
+function normalizeTrackingSettings(
+  settings: Partial<TrackingSettings> | undefined
+): TrackingSettings {
+  return {
+    ...DEFAULT_TRACKING_SETTINGS,
+    ...settings,
+    allowedDomains: Array.isArray(settings?.allowedDomains)
+      ? settings.allowedDomains.filter((domain) => typeof domain === 'string')
+      : [],
+    blockedDomains: Array.isArray(settings?.blockedDomains)
+      ? settings.blockedDomains.filter((domain) => typeof domain === 'string')
+      : [...DEFAULT_TRACKING_SETTINGS.blockedDomains],
+  };
+}
+
 export function serializeState(state: AppState): ExportPayload {
   return {
     schemaVersion: state.schemaVersion,
@@ -49,13 +82,19 @@ export function serializeState(state: AppState): ExportPayload {
     notes: Object.values(state.notes),
     noteOrderByNotebook: state.noteOrderByNotebook,
     childOrderByNote: state.childOrderByNote,
+    researchLogs: state.researchLogOrder
+      .map((id) => state.researchLogs[id])
+      .filter(Boolean),
+    researchLogOrder: state.researchLogOrder,
+    activityLog: state.activityLog,
+    trackingSettings: state.trackingSettings,
   };
 }
 
 export function parseImport(raw: string): ExportPayload {
   const parsed = JSON.parse(raw) as Partial<ExportPayload>;
 
-  if (parsed.schemaVersion !== SCHEMA_VERSION && parsed.schemaVersion !== 1) {
+  if (![SCHEMA_VERSION, 2, 1].includes(parsed.schemaVersion ?? -1)) {
     throw new Error(
       `Unsupported schema version: ${String(parsed.schemaVersion)}`
     );
@@ -77,6 +116,14 @@ export function parseImport(raw: string): ExportPayload {
     }
   }
 
+  if (
+    parsed.researchLogs &&
+    (!Array.isArray(parsed.researchLogs) ||
+      !parsed.researchLogs.every(isResearchLog))
+  ) {
+    throw new Error('Invalid research log in payload');
+  }
+
   return {
     schemaVersion: parsed.schemaVersion ?? SCHEMA_VERSION,
     exportedAt: parsed.exportedAt ?? new Date().toISOString(),
@@ -87,6 +134,10 @@ export function parseImport(raw: string): ExportPayload {
     })),
     noteOrderByNotebook: parsed.noteOrderByNotebook,
     childOrderByNote: parsed.childOrderByNote,
+    researchLogs: parsed.researchLogs ?? [],
+    researchLogOrder: parsed.researchLogOrder ?? [],
+    activityLog: parsed.activityLog ?? [],
+    trackingSettings: normalizeTrackingSettings(parsed.trackingSettings),
   };
 }
 
@@ -152,7 +203,24 @@ export function mergeImportedState(
     payload.childOrderByNote
   );
 
-  return next;
+  for (const log of payload.researchLogs ?? []) {
+    next.researchLogs[log.id] = log;
+  }
+  next.researchLogOrder = [
+    ...new Set([
+      ...(payload.researchLogOrder ??
+        payload.researchLogs?.map((log) => log.id) ??
+        []),
+      ...next.researchLogOrder,
+    ]),
+  ].filter((id) => Boolean(next.researchLogs[id]));
+  next.activityLog = [
+    ...(payload.activityLog ?? []),
+    ...next.activityLog,
+  ].slice(0, 200);
+  next.trackingSettings = payload.trackingSettings ?? next.trackingSettings;
+
+  return normalizeState(next);
 }
 
 export function replaceImportedState(payload: ExportPayload): AppState {
@@ -177,6 +245,11 @@ export function replaceImportedState(payload: ExportPayload): AppState {
     notebookOrder,
     noteOrderByNotebook,
     childOrderByNote,
+    researchLogs: {},
+    researchLogOrder: [],
+    activityLog: payload.activityLog ?? [],
+    trackingSettings:
+      payload.trackingSettings ?? structuredClone(DEFAULT_TRACKING_SETTINGS),
   };
 
   importNotesIntoState(
@@ -186,5 +259,14 @@ export function replaceImportedState(payload: ExportPayload): AppState {
     payload.childOrderByNote
   );
 
-  return base;
+  for (const log of payload.researchLogs ?? []) {
+    base.researchLogs[log.id] = log;
+  }
+  base.researchLogOrder = (
+    payload.researchLogOrder ??
+    payload.researchLogs?.map((log) => log.id) ??
+    []
+  ).filter((id) => Boolean(base.researchLogs[id]));
+
+  return normalizeState(base);
 }

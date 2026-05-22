@@ -19,6 +19,10 @@ import {
 import { formatCommandPlugin } from './plugins/formatCommandPlugin';
 
 export const HOME_TAB = 'home';
+export const DASHBOARD_TAB = 'dashboard';
+export const RESEARCH_TAB = 'research';
+export const ACTIVITY_TAB = 'activity';
+export const SETTINGS_TAB = 'settings';
 
 function isAllowedLinkUrl(url: string): boolean {
   return (

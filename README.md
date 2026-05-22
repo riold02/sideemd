@@ -12,6 +12,9 @@ Sideemd is a Chrome extension that gives you a focused writing workspace without
 - **Block insert menu** — Insert paragraphs, headings (H1–H6), lists, tasks, quotes, code blocks, tables, and more below the current block.
 - **Local-first storage** — All data is persisted with `chrome.storage.local`; nothing is sent to a backend by this extension.
 - **Search** — Filter notes by title and content within the active notebook.
+- **Workspace dashboard** — See page and note totals, daily research totals, top research sites and keywords.
+- **Research and activity logs** — Capture non-sensitive page visits and prompts while tracking is running, add manual research notes, filter/export research data, and review workspace activity.
+- **Tracking controls** — Pause research tracking, allow or block domains, and keep sensitive page patterns out of research capture.
 - **Import / export** — Back up or migrate data as JSON (merge or replace).
 
 ## Requirements
@@ -53,7 +56,7 @@ Load the `dist/` folder as an unpacked extension, or package it for distribution
 
 ## Data and privacy
 
-Sideemd stores notebooks, notes, and editor state locally in the browser via the Chrome extension storage API. The extension does not include analytics, accounts, or cloud sync. You are responsible for backups (export) and for data if you uninstall the extension or clear browser data.
+Sideemd stores notebooks, notes, research logs, activity logs, and editor state locally in the browser via the Chrome extension storage API. The extension does not include analytics, accounts, or cloud sync. While research tracking is running, it captures non-sensitive page metadata used by the research log: search text when present, otherwise the page title, website, URL, title, and time. ChatGPT capture stores submitted prompt text rather than assistant responses. It does not read passwords, cookies, tokens, or browser sessions. You are responsible for backups (export) and for data if you uninstall the extension or clear browser data.
 
 ## Development
 

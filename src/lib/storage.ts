@@ -3,10 +3,13 @@ import {
   LEGACY_STORAGE_KEY,
   Note,
   Notebook,
+  ResearchLog,
   STORAGE_KEY,
+  TrackingSettings,
 } from './types';
 import {
-  MARKDOWN_SHOWCASE_MARKDOWN,
+  appendActivity,
+  createActivityEntry,
   createDefaultState,
   createId,
   nowIso,
@@ -17,6 +20,7 @@ import {
   deleteNotebookFromState,
   getChromeStorage,
   removeNoteSubtree,
+  setNoteSubtreeDeleted,
   type ChromeStorageLike,
 } from './storageHelpers';
 
@@ -28,9 +32,21 @@ export interface StorageRepository {
   createSubnote(parentNoteId: string, title?: string): Promise<Note>;
   updateNote(
     noteId: string,
-    updates: Partial<Pick<Note, 'title' | 'contentMarkdown' | 'tags'>>
+    updates: Partial<
+      Pick<Note, 'title' | 'contentMarkdown' | 'tags' | 'pinned' | 'favorite'>
+    >
   ): Promise<Note | null>;
   deleteNote(noteId: string): Promise<void>;
+  discardNote(noteId: string): Promise<void>;
+  restoreNote(noteId: string): Promise<void>;
+  createResearchLog(
+    input: Omit<ResearchLog, 'id' | 'researchedAt'> & { researchedAt?: string }
+  ): Promise<ResearchLog>;
+  deleteResearchLog(logId: string): Promise<void>;
+  clearResearchLogs(): Promise<void>;
+  updateTrackingSettings(
+    updates: Partial<TrackingSettings>
+  ): Promise<TrackingSettings>;
   renameNotebook(notebookId: string, name: string): Promise<Notebook | null>;
   deleteNotebook(notebookId: string): Promise<void>;
   searchNotes(query: string): Promise<Note[]>;
@@ -105,7 +121,7 @@ export class ChromeStorageRepository implements StorageRepository {
       notebookId,
       parentNoteId: null,
       title: title.trim() || 'Untitled Note',
-      contentMarkdown: MARKDOWN_SHOWCASE_MARKDOWN,
+      contentMarkdown: '',
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -116,7 +132,12 @@ export class ChromeStorageRepository implements StorageRepository {
     state.noteOrderByNotebook[notebookId].unshift(note.id);
     state.notebooks[notebookId].updatedAt = timestamp;
 
-    await this.saveState(state);
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('note.created', 'note', note.id, note.title)
+      )
+    );
     return note;
   }
 
@@ -145,13 +166,20 @@ export class ChromeStorageRepository implements StorageRepository {
     appendChild(state, parentNoteId, note.id);
     state.notebooks[parent.notebookId].updatedAt = timestamp;
 
-    await this.saveState(state);
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('note.created', 'note', note.id, note.title)
+      )
+    );
     return note;
   }
 
   async updateNote(
     noteId: string,
-    updates: Partial<Pick<Note, 'title' | 'contentMarkdown' | 'tags'>>
+    updates: Partial<
+      Pick<Note, 'title' | 'contentMarkdown' | 'tags' | 'pinned' | 'favorite'>
+    >
   ): Promise<Note | null> {
     const state = await this.getState();
     const existing = state.notes[noteId];
@@ -169,14 +197,43 @@ export class ChromeStorageRepository implements StorageRepository {
     state.notes[noteId] = next;
     state.notebooks[next.notebookId].updatedAt = next.updatedAt;
 
-    await this.saveState(state);
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('note.updated', 'note', next.id, next.title)
+      )
+    );
     return next;
   }
 
   async deleteNote(noteId: string): Promise<void> {
     const state = await this.getState();
+    const note = setNoteSubtreeDeleted(state, noteId, nowIso());
+    if (!note) return;
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('note.deleted', 'note', note.id, note.title)
+      )
+    );
+  }
+
+  async discardNote(noteId: string): Promise<void> {
+    const state = await this.getState();
     if (!removeNoteSubtree(state, noteId)) return;
     await this.saveState(state);
+  }
+
+  async restoreNote(noteId: string): Promise<void> {
+    const state = await this.getState();
+    const note = setNoteSubtreeDeleted(state, noteId, null);
+    if (!note) return;
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('note.restored', 'note', note.id, note.title)
+      )
+    );
   }
 
   async renameNotebook(
@@ -206,7 +263,7 @@ export class ChromeStorageRepository implements StorageRepository {
   async searchNotes(query: string): Promise<Note[]> {
     const state = await this.getState();
     const normalized = query.trim().toLowerCase();
-    const notes = Object.values(state.notes);
+    const notes = Object.values(state.notes).filter((note) => !note.deletedAt);
 
     if (!normalized) {
       return notes;
@@ -218,5 +275,77 @@ export class ChromeStorageRepository implements StorageRepository {
         note.contentMarkdown.toLowerCase().includes(normalized)
       );
     });
+  }
+
+  async createResearchLog(
+    input: Omit<ResearchLog, 'id' | 'researchedAt'> & {
+      researchedAt?: string;
+    }
+  ): Promise<ResearchLog> {
+    const state = await this.getState();
+    const log: ResearchLog = {
+      ...input,
+      id: createId('research'),
+      researchedAt: input.researchedAt ?? nowIso(),
+    };
+    state.researchLogs[log.id] = log;
+    state.researchLogOrder.unshift(log.id);
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('research.created', 'research', log.id, log.query)
+      )
+    );
+    return log;
+  }
+
+  async deleteResearchLog(logId: string): Promise<void> {
+    const state = await this.getState();
+    const log = state.researchLogs[logId];
+    if (!log) return;
+    delete state.researchLogs[logId];
+    state.researchLogOrder = state.researchLogOrder.filter(
+      (id) => id !== logId
+    );
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('research.deleted', 'research', log.id, log.query)
+      )
+    );
+  }
+
+  async clearResearchLogs(): Promise<void> {
+    const state = await this.getState();
+    state.researchLogs = {};
+    state.researchLogOrder = [];
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry('research.cleared', 'research', 'all', 'All logs')
+      )
+    );
+  }
+
+  async updateTrackingSettings(
+    updates: Partial<TrackingSettings>
+  ): Promise<TrackingSettings> {
+    const state = await this.getState();
+    state.trackingSettings = {
+      ...state.trackingSettings,
+      ...updates,
+    };
+    await this.saveState(
+      appendActivity(
+        state,
+        createActivityEntry(
+          'tracking.updated',
+          'tracking',
+          'settings',
+          'Research tracking'
+        )
+      )
+    );
+    return state.trackingSettings;
   }
 }

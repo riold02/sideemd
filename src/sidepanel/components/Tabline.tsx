@@ -1,4 +1,18 @@
-import { X } from 'lucide-react';
+import {
+  Activity,
+  BookOpen,
+  FlaskConical,
+  LayoutDashboard,
+  Settings,
+  X,
+} from 'lucide-react';
+import {
+  ACTIVITY_TAB,
+  DASHBOARD_TAB,
+  HOME_TAB,
+  RESEARCH_TAB,
+  SETTINGS_TAB,
+} from '../editorConfig';
 import type { TablineActions, TablineState } from '../types';
 
 interface Props {
@@ -12,25 +26,30 @@ export default function Tabline({ state, actions }: Props) {
     openNoteTab,
     closeNoteTab,
     handleCreateNote,
-    onHomeClick,
+    onViewClick,
     onCloseSidebar,
   } = actions;
 
   return (
     <nav className="tabline" aria-label="Open notes">
-      <button
-        className={`home-tab ${activeTab === 'home' ? 'active' : ''}`}
-        onClick={() => onHomeClick()}
-      >
-        <img
-          className="home-tab-icon"
-          src="/icons/logo.svg"
-          alt=""
-          width={17}
-          height={17}
-        />
-        Home
-      </button>
+      {[
+        { id: DASHBOARD_TAB, label: 'Dashboard', icon: LayoutDashboard },
+        { id: HOME_TAB, label: 'Notes', icon: BookOpen },
+        { id: RESEARCH_TAB, label: 'Research', icon: FlaskConical },
+        { id: ACTIVITY_TAB, label: 'Activity', icon: Activity },
+        { id: SETTINGS_TAB, label: 'Settings', icon: Settings },
+      ].map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          className={`home-tab ${activeTab === id ? 'active' : ''}`}
+          onClick={() => onViewClick(id)}
+          aria-label={label}
+          title={label}
+        >
+          <Icon size={16} strokeWidth={2.1} />
+          <span>{label}</span>
+        </button>
+      ))}
       {openNoteIds.map((noteId) => {
         const note = notesById[noteId];
         if (!note) return null;
@@ -48,7 +67,7 @@ export default function Tabline({ state, actions }: Props) {
             </button>
             <button
               className="tab-close"
-              onClick={() => closeNoteTab(noteId)}
+              onClick={() => void closeNoteTab(noteId)}
               aria-label={`Close ${note.title}`}
             >
               x

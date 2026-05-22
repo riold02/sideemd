@@ -9,18 +9,28 @@ export interface HomeViewState {
   selectedNotebookId: string;
   isHomeMenuOpen: boolean;
   search: string;
+  noteTagFilter: string;
+  tags: string[];
+  showTrash: boolean;
 }
 
 export interface HomeViewActions {
   openNoteTab: (id: string) => void;
   handleCreateNote: () => Promise<void> | void;
   handleDeleteNote: (id: string) => Promise<void> | void;
+  handleRestoreNote: (id: string) => Promise<void> | void;
+  updateNoteMetadata: (
+    id: string,
+    updates: Partial<Pick<Note, 'tags' | 'pinned' | 'favorite'>>
+  ) => Promise<void> | void;
   handleExport: () => Promise<void> | void;
   handleImport: (
     e: React.ChangeEvent<HTMLInputElement>
   ) => Promise<void> | void;
   toggleHomeMenu: () => void;
   setSearch: (value: string) => void;
+  setNoteTagFilter: (value: string) => void;
+  setShowTrash: (value: boolean) => void;
 }
 
 export interface HomeViewFormatters {
@@ -36,9 +46,9 @@ export interface TablineState {
 
 export interface TablineActions {
   openNoteTab: (id: string) => void;
-  closeNoteTab: (id: string) => void;
+  closeNoteTab: (id: string) => Promise<void> | void;
   handleCreateNote: () => Promise<void> | void;
-  onHomeClick: () => void;
+  onViewClick: (view: string) => void;
   onCloseSidebar: () => void;
 }
 

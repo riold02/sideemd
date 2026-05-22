@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+  font-family: 'Iowan Old Style', 'Palatino Linotype', serif;
 }
 
 * {
@@ -15,7 +15,12 @@ body,
 }
 
 body {
-  background: radial-gradient(circle at top right, #f6eee2, #e9ecef 55%, #dce2e8);
+  background: radial-gradient(
+    circle at top right,
+    #f6eee2,
+    #e9ecef 55%,
+    #dce2e8
+  );
   color: #1e1f24;
 }
 
@@ -52,12 +57,18 @@ label {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  flex: 0 0 auto;
   min-height: 32px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   padding: 5px 10px;
   white-space: nowrap;
+}
+
+.home-tab span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home-tab-icon {
@@ -254,11 +265,104 @@ ul {
 
 .note-list li {
   position: relative;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   min-height: 56px;
   border-radius: 8px;
   padding: 5px 7px 5px 10px;
+}
+
+.note-filter-row,
+.view-actions,
+.quick-actions,
+.inline-create-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-filter-row {
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.note-filter-row select,
+.research-filters input,
+.research-filters select,
+.inline-create-form input,
+.research-form input,
+.research-form textarea,
+.settings-field textarea {
+  min-width: 0;
+  border: 1px solid #c5ced8;
+  border-radius: 7px;
+  background: #fff;
+  padding: 7px 8px;
+}
+
+.segmented-control {
+  display: inline-grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 2px;
+  border: 1px solid #c5ced8;
+  border-radius: 8px;
+  background: #eef3f8;
+  padding: 2px;
+}
+
+.segmented-control button {
+  border: 0;
+  background: transparent;
+}
+
+.segmented-control button.active {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(30, 31, 36, 0.12);
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag-chip {
+  border-radius: 6px;
+  background: #dcecdf;
+  color: #31523a;
+  padding: 2px 5px;
+  font:
+    11px/1.2 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.note-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.note-tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #596879;
+  padding: 0;
+}
+
+.note-tool-button.active {
+  background: #e9efe0;
+  color: #60791e;
+}
+
+.note-tool-button:hover {
+  background: #edf2f7;
 }
 
 /* Restore natural list rendering inside the visual editor content */
@@ -279,7 +383,7 @@ ul {
   margin-bottom: 0.35rem;
 }
 
-.visual-editor-content input[type="checkbox"] {
+.visual-editor-content input[type='checkbox'] {
   appearance: none;
   width: 16px;
   height: 16px;
@@ -291,12 +395,12 @@ ul {
   position: relative;
 }
 
-.visual-editor-content input[type="checkbox"]:checked {
+.visual-editor-content input[type='checkbox']:checked {
   background: #1f6feb;
   border-color: #1f6feb;
 }
 
-.visual-editor-content input[type="checkbox"]:checked::after {
+.visual-editor-content input[type='checkbox']:checked::after {
   position: absolute;
   left: 4px;
   top: 1px;
@@ -305,7 +409,7 @@ ul {
   border: solid #fff;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
-  content: "";
+  content: '';
 }
 
 .note-list li::before {
@@ -316,7 +420,7 @@ ul {
   width: 3px;
   border-radius: 999px;
   background: transparent;
-  content: "";
+  content: '';
 }
 
 .note-list li.active {
@@ -388,7 +492,7 @@ button,
   border-radius: 999px;
   background: transparent;
   color: #8a4650;
-  opacity: 0;
+  opacity: 1;
   padding: 0;
 }
 
@@ -533,8 +637,9 @@ button,
 }
 
 .visual-editor.mdxeditor .visual-editor-content code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
   font-size: 0.9em;
   background: #eef2f7;
   padding: 0.08rem 0.34rem;
@@ -564,6 +669,254 @@ button,
   min-height: 0;
 }
 
+.workspace-view {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.view-header h2,
+.kanban-column h3 {
+  margin: 0;
+  font:
+    700 15px/1.2 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.metric-grid article,
+.dashboard-summary > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #c5ced8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+}
+
+.metric-grid strong {
+  font:
+    700 24px/1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.metric-grid span,
+.dashboard-summary span,
+.research-list span,
+.research-list time,
+.activity-list time {
+  color: #667789;
+  font:
+    12px/1.35 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.dashboard-summary {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quick-actions {
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.inline-create-form {
+  min-width: 0;
+}
+
+.inline-create-form input {
+  width: min(180px, 100%);
+}
+
+.inline-create-form button,
+.research-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+}
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(195px, 1fr));
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 220px;
+  border: 1px solid #c5ced8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 9px;
+}
+
+.icon-button.compact {
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+}
+
+.research-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.research-form textarea {
+  grid-column: span 2;
+  min-height: 54px;
+  resize: vertical;
+}
+
+.research-form button {
+  justify-self: start;
+}
+
+.research-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.research-list {
+  display: grid;
+  gap: 7px;
+}
+
+.research-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 8px;
+  border: 1px solid #d2dae4;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 9px;
+}
+
+.research-list p,
+.research-list strong,
+.research-list time,
+.research-list span {
+  grid-column: 1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.research-list button {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.activity-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-list li {
+  display: grid;
+  gap: 2px;
+  border-bottom: 1px solid #d8e0e9;
+  padding: 0 0 8px;
+}
+
+.settings-view {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.settings-toggle,
+.settings-field {
+  display: grid;
+  gap: 6px;
+  font:
+    14px/1.35 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.settings-toggle {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.settings-field textarea {
+  min-height: 74px;
+  resize: vertical;
+}
+
+.pause-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  justify-self: start;
+}
+
+@media (max-width: 760px) {
+  .home-tab:not(.active) {
+    justify-content: center;
+    width: 34px;
+    padding-inline: 0;
+  }
+
+  .home-tab:not(.active) span {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-tab {
+    justify-content: center;
+    width: 34px;
+    padding-inline: 0;
+  }
+
+  .home-tab span {
+    display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .research-form,
+  .research-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .research-form textarea {
+    grid-column: auto;
+  }
+}
+
 .visual-editor-shell {
   position: relative;
   margin-top: 12px;
@@ -581,7 +934,10 @@ button,
 .visual-editor-content {
   min-height: 240px;
   padding: 16px;
-  font: 15px/1.62 "Iowan Old Style", "Palatino Linotype", serif;
+  font:
+    15px/1.62 'Iowan Old Style',
+    'Palatino Linotype',
+    serif;
 }
 
 .visual-editor-content > * + * {
