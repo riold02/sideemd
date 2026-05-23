@@ -1,5 +1,6 @@
 import {
   useMemo,
+  useRef,
   useState,
   type DragEvent,
   type FormEvent,
@@ -91,6 +92,8 @@ export default function HomeView({ state, actions, formatters }: Props) {
   );
   const [draggedNotebookId, setDraggedNotebookId] = useState('');
   const [draggedNoteId, setDraggedNoteId] = useState('');
+  const notebookRenameTimer = useRef<number | null>(null);
+  const noteRenameTimer = useRef<number | null>(null);
 
   const searchQuery = search.trim().toLowerCase();
   const normalizedTag = noteTagFilter.trim().toLowerCase();
@@ -179,6 +182,17 @@ export default function HomeView({ state, actions, formatters }: Props) {
     await commitNotebookForm();
   }
 
+  function handleNotebookRenameInput(value: string) {
+    setDraftNotebookName(value);
+    if (!editingNotebookId) return;
+    if (notebookRenameTimer.current) {
+      window.clearTimeout(notebookRenameTimer.current);
+    }
+    notebookRenameTimer.current = window.setTimeout(() => {
+      void handleRenameNotebook(clampTitle(value, 'Untitled Notebook'));
+    }, 120);
+  }
+
   function beginRootCreate() {
     setCreatingParentId('root');
     setEditingNoteId('');
@@ -231,8 +245,38 @@ export default function HomeView({ state, actions, formatters }: Props) {
     await commitRename(noteId);
   }
 
+  function handleNoteRenameInput(noteId: string, value: string) {
+    setDraftNoteTitle(value);
+    if (noteRenameTimer.current) {
+      window.clearTimeout(noteRenameTimer.current);
+    }
+    noteRenameTimer.current = window.setTimeout(() => {
+      void handleRenameNote(noteId, clampTitle(value, 'Untitled Note'));
+    }, 120);
+  }
+
   function stopInlineEvent(event: MouseEvent | DragEvent | FormEvent) {
     event.stopPropagation();
+  }
+
+  function getNoteMeta(note: Note) {
+    const snippet = createNoteSnippet(note.contentMarkdown);
+    const parentTitle = note.parentNoteId
+      ? notesById[note.parentNoteId]?.title
+      : '';
+
+    if (parentTitle) {
+      if (!note.contentMarkdown.trim() || snippet === 'Untitled Note') {
+        return `Subpage in ${parentTitle}`;
+      }
+      return `${parentTitle} · ${snippet}`;
+    }
+
+    if (!note.contentMarkdown.trim() || snippet === 'Untitled Note') {
+      return formatNoteDate(note.updatedAt);
+    }
+
+    return `${formatNoteDate(note.updatedAt)} - ${snippet}`;
   }
 
   function siblingIdsFor(note: Note) {
@@ -303,12 +347,13 @@ export default function HomeView({ state, actions, formatters }: Props) {
           <input
             autoFocus
             value={draftNotebookName}
-            onChange={(event) => setDraftNotebookName(event.target.value)}
+            onChange={(event) => handleNotebookRenameInput(event.target.value)}
+            onBlur={() => {
+              setEditingNotebookId('');
+              setDraftNotebookName('');
+            }}
             aria-label="Notebook name"
           />
-          <button type="button" onClick={() => void commitNotebookForm()}>
-            Save
-          </button>
         </form>
       );
     }
@@ -384,12 +429,15 @@ export default function HomeView({ state, actions, formatters }: Props) {
               <input
                 autoFocus
                 value={draftNoteTitle}
-                onChange={(event) => setDraftNoteTitle(event.target.value)}
+                onChange={(event) =>
+                  handleNoteRenameInput(note.id, event.target.value)
+                }
+                onBlur={() => {
+                  setEditingNoteId('');
+                  setDraftNoteTitle('');
+                }}
                 aria-label={`Rename ${note.title}`}
               />
-              <button type="button" onClick={() => void commitRename(note.id)}>
-                Save
-              </button>
             </form>
           ) : (
             <button
@@ -398,12 +446,9 @@ export default function HomeView({ state, actions, formatters }: Props) {
               aria-label={`Open ${note.title}`}
             >
               <FileText className="note-row-icon" size={16} strokeWidth={2.1} />
-              <span className="note-row-copy">
-                <span className="note-row-title">{note.title}</span>
-                <span className="note-row-meta">
-                  {formatNoteDate(note.updatedAt)} -{' '}
-                  {createNoteSnippet(note.contentMarkdown)}
-                </span>
+                <span className="note-row-copy">
+                  <span className="note-row-title">{note.title}</span>
+                  <span className="note-row-meta">{getNoteMeta(note)}</span>
                 {note.tags?.length ? (
                   <span className="tag-row">
                     {note.tags.map((tag) => (

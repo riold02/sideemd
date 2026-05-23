@@ -196,10 +196,10 @@ describe('App editor', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Rename selected notebook' })
     );
-    fireEvent.change(screen.getByLabelText('Notebook name'), {
+    const notebookNameInput = screen.getByLabelText('Notebook name');
+    fireEvent.change(notebookNameInput, {
       target: { value: 'Delete me' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       const state = store[STORAGE_KEY] as AppState;
@@ -207,6 +207,7 @@ describe('App editor', () => {
         Object.values(state.notebooks).some((notebook) => notebook.name === 'Delete me')
       ).toBe(true);
     });
+    fireEvent.blur(notebookNameInput);
 
     fireEvent.click(
       await screen.findByRole('button', { name: 'Open notebook Delete me' })
@@ -252,6 +253,42 @@ describe('App editor', () => {
       },
       { timeout: 1000 }
     );
+  });
+
+  it('creates a named subpage from the editor quick insert menu', async () => {
+    const { chrome, store } = createChromeStorageMock();
+    vi.stubGlobal('chrome', chrome);
+    const prompt = vi.fn().mockReturnValue('Child page');
+    vi.stubGlobal('prompt', prompt);
+
+    const { default: App } = await import('../sidepanel/App');
+    render(<App />);
+
+    await openNotes();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open Welcome' })
+    );
+
+    const editor = await screen.findByLabelText('Visual markdown editor');
+    fireEvent.mouseMove(editor.querySelector('p') as Element);
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Insert block below' })
+    );
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Create subpage' }));
+
+    expect(prompt).toHaveBeenCalledWith('Subpage title', '');
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notes).some(
+          (note) =>
+            note.title === 'Child page' &&
+            note.parentNoteId &&
+            note.notebookId
+        )
+      ).toBe(true);
+    });
   });
 
   it('exposes heading levels 1 through 6 in the block insert menu', async () => {
