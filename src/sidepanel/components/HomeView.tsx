@@ -1,4 +1,10 @@
-import { useMemo, useState, type DragEvent, type FormEvent } from 'react';
+import {
+  useMemo,
+  useState,
+  type DragEvent,
+  type FormEvent,
+  type MouseEvent,
+} from 'react';
 import {
   BookCopy,
   ChevronDown,
@@ -156,8 +162,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
     setDraftNotebookName(notebook.name);
   }
 
-  async function submitNotebookForm(event: FormEvent) {
-    event.preventDefault();
+  async function commitNotebookForm() {
     const value = clampTitle(draftNotebookName, 'Untitled Notebook');
     if (creatingNotebook) {
       await handleCreateNotebook(value);
@@ -167,6 +172,11 @@ export default function HomeView({ state, actions, formatters }: Props) {
     setCreatingNotebook(false);
     setEditingNotebookId('');
     setDraftNotebookName('');
+  }
+
+  async function submitNotebookForm(event: FormEvent) {
+    event.preventDefault();
+    await commitNotebookForm();
   }
 
   function beginRootCreate() {
@@ -188,25 +198,41 @@ export default function HomeView({ state, actions, formatters }: Props) {
     setDraftNoteTitle(note.title);
   }
 
+  async function commitRootPage() {
+    await handleCreateNote(clampTitle(draftNoteTitle, 'Untitled Note'));
+    setCreatingParentId(null);
+    setDraftNoteTitle('');
+  }
+
   async function submitRootPage(event: FormEvent) {
     event.preventDefault();
-    await handleCreateNote(clampTitle(draftNoteTitle, 'Untitled Note'));
+    await commitRootPage();
+  }
+
+  async function commitSubpage(parentNoteId: string) {
+    await handleCreateSubpage(parentNoteId, clampTitle(draftNoteTitle, 'Untitled Note'));
     setCreatingParentId(null);
     setDraftNoteTitle('');
   }
 
   async function submitSubpage(event: FormEvent, parentNoteId: string) {
     event.preventDefault();
-    await handleCreateSubpage(parentNoteId, clampTitle(draftNoteTitle, 'Untitled Note'));
-    setCreatingParentId(null);
+    await commitSubpage(parentNoteId);
+  }
+
+  async function commitRename(noteId: string) {
+    await handleRenameNote(noteId, clampTitle(draftNoteTitle, 'Untitled Note'));
+    setEditingNoteId('');
     setDraftNoteTitle('');
   }
 
   async function submitRename(event: FormEvent, noteId: string) {
     event.preventDefault();
-    await handleRenameNote(noteId, clampTitle(draftNoteTitle, 'Untitled Note'));
-    setEditingNoteId('');
-    setDraftNoteTitle('');
+    await commitRename(noteId);
+  }
+
+  function stopInlineEvent(event: MouseEvent | DragEvent | FormEvent) {
+    event.stopPropagation();
   }
 
   function siblingIdsFor(note: Note) {
@@ -271,6 +297,8 @@ export default function HomeView({ state, actions, formatters }: Props) {
           key={notebook.id}
           className="inline-rename-form"
           onSubmit={submitNotebookForm}
+          onClick={stopInlineEvent}
+          onMouseDown={stopInlineEvent}
         >
           <input
             autoFocus
@@ -278,7 +306,9 @@ export default function HomeView({ state, actions, formatters }: Props) {
             onChange={(event) => setDraftNotebookName(event.target.value)}
             aria-label="Notebook name"
           />
-          <button type="submit">Save</button>
+          <button type="button" onClick={() => void commitNotebookForm()}>
+            Save
+          </button>
         </form>
       );
     }
@@ -348,6 +378,8 @@ export default function HomeView({ state, actions, formatters }: Props) {
             <form
               className="note-tree-main inline-tree-form"
               onSubmit={(event) => void submitRename(event, note.id)}
+              onClick={stopInlineEvent}
+              onMouseDown={stopInlineEvent}
             >
               <input
                 autoFocus
@@ -355,7 +387,9 @@ export default function HomeView({ state, actions, formatters }: Props) {
                 onChange={(event) => setDraftNoteTitle(event.target.value)}
                 aria-label={`Rename ${note.title}`}
               />
-              <button type="submit">Save</button>
+              <button type="button" onClick={() => void commitRename(note.id)}>
+                Save
+              </button>
             </form>
           ) : (
             <button
@@ -465,6 +499,8 @@ export default function HomeView({ state, actions, formatters }: Props) {
             className="inline-tree-form tree-child-form"
             style={{ marginLeft: `${depth * 18 + 28}px` }}
             onSubmit={(event) => void submitSubpage(event, note.id)}
+            onClick={stopInlineEvent}
+            onMouseDown={stopInlineEvent}
           >
             <input
               autoFocus
@@ -473,7 +509,9 @@ export default function HomeView({ state, actions, formatters }: Props) {
               placeholder="Subpage title"
               aria-label="Subpage title"
             />
-            <button type="submit">Add</button>
+            <button type="button" onClick={() => void commitSubpage(note.id)}>
+              Add
+            </button>
           </form>
         ) : null}
 
@@ -562,7 +600,12 @@ export default function HomeView({ state, actions, formatters }: Props) {
             </div>
           </div>
           {creatingNotebook ? (
-            <form className="inline-rename-form" onSubmit={submitNotebookForm}>
+            <form
+              className="inline-rename-form"
+              onSubmit={submitNotebookForm}
+              onClick={stopInlineEvent}
+              onMouseDown={stopInlineEvent}
+            >
               <input
                 autoFocus
                 value={draftNotebookName}
@@ -570,7 +613,9 @@ export default function HomeView({ state, actions, formatters }: Props) {
                 placeholder="Notebook name"
                 aria-label="Notebook name"
               />
-              <button type="submit">Add</button>
+              <button type="button" onClick={() => void commitNotebookForm()}>
+                Add
+              </button>
             </form>
           ) : null}
           <div className="notebook-list" role="list">
@@ -618,7 +663,12 @@ export default function HomeView({ state, actions, formatters }: Props) {
         </div>
 
         {creatingParentId === 'root' ? (
-          <form className="inline-tree-form root-page-form" onSubmit={submitRootPage}>
+          <form
+            className="inline-tree-form root-page-form"
+            onSubmit={submitRootPage}
+            onClick={stopInlineEvent}
+            onMouseDown={stopInlineEvent}
+          >
             <input
               autoFocus
               value={draftNoteTitle}
@@ -626,7 +676,9 @@ export default function HomeView({ state, actions, formatters }: Props) {
               placeholder="Page title"
               aria-label="Page title"
             />
-            <button type="submit">Add</button>
+            <button type="button" onClick={() => void commitRootPage()}>
+              Add
+            </button>
           </form>
         ) : null}
 

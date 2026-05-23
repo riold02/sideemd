@@ -80,6 +80,7 @@ export interface TablineActions {
 
 export interface EditorViewState {
   selectedNote: Note | null;
+  notebookName: string;
   noteAncestors: Note[];
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;

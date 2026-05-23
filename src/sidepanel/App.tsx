@@ -131,6 +131,7 @@ export default function App() {
 
   const editorView = useEditorViewProps({
     selectedNote,
+    notebookName: selectedNote ? (state.notebooks[selectedNote.notebookId]?.name ?? '') : '',
     selectedNoteAncestors,
     isBlockMenuOpen,
     blockInsertTarget,
@@ -229,7 +230,7 @@ export default function App() {
       handleCreateNote,
       handleRenameNote,
       handleMoveNote,
-      handleCreateSubpage: (parentNoteId, title) =>
+      handleCreateSubpage: (parentNoteId: string, title?: string) =>
         handleCreateSubnote(parentNoteId, title, { openTab: false }),
       handleCreateNotebook,
       handleRenameNotebook,
