@@ -1,9 +1,11 @@
 import {
+  BookCopy,
   FileText,
   Download,
   Upload,
   Plus,
   MoreVertical,
+  Pencil,
   Pin,
   RotateCcw,
   Search,
@@ -28,6 +30,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
     filteredNotes,
     activeNoteId,
     selectedNotebookId,
+    notebooks,
     isHomeMenuOpen,
     search,
     noteTagFilter,
@@ -37,12 +40,16 @@ export default function HomeView({ state, actions, formatters }: Props) {
   const {
     openNoteTab,
     handleCreateNote,
+    handleCreateNotebook,
+    handleRenameNotebook,
+    handleDeleteNotebook,
     handleDeleteNote,
     handleRestoreNote,
     updateNoteMetadata,
     handleExport,
     handleImport,
     toggleHomeMenu,
+    setSelectedNotebookId,
     setSearch,
     setNoteTagFilter,
     setShowTrash,
@@ -91,6 +98,57 @@ export default function HomeView({ state, actions, formatters }: Props) {
             </div>
           </div>
         </div>
+
+        <section className="notebook-panel" aria-label="Notebooks">
+          <div className="section-header">
+            <h2>Notebooks</h2>
+            <div className="home-actions">
+              <button
+                className="icon-button compact"
+                onClick={() => void handleCreateNotebook()}
+                aria-label="Create notebook"
+                title="Create notebook"
+              >
+                <Plus size={16} strokeWidth={2.3} />
+              </button>
+              <button
+                className="icon-button compact"
+                onClick={() => void handleRenameNotebook()}
+                aria-label="Rename selected notebook"
+                title="Rename selected notebook"
+                disabled={!selectedNotebookId}
+              >
+                <Pencil size={15} strokeWidth={2.2} />
+              </button>
+              <button
+                className="icon-button compact"
+                onClick={() => void handleDeleteNotebook()}
+                aria-label="Delete selected notebook"
+                title="Delete selected notebook"
+                disabled={!selectedNotebookId}
+              >
+                <Trash2 size={15} strokeWidth={2.2} />
+              </button>
+            </div>
+          </div>
+          <div className="notebook-list" role="list">
+            {notebooks.map((notebook) => (
+              <button
+                key={notebook.id}
+                className={`notebook-chip ${selectedNotebookId === notebook.id ? 'active' : ''}`}
+                onClick={() => setSelectedNotebookId(notebook.id)}
+                aria-label={`Open notebook ${notebook.name}`}
+                aria-pressed={selectedNotebookId === notebook.id}
+              >
+                <span className="notebook-chip-main">
+                  <BookCopy size={15} strokeWidth={2.1} />
+                  <span className="notebook-chip-name">{notebook.name}</span>
+                </span>
+                <span className="notebook-chip-count">{notebook.noteCount}</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <label className="search-field">
           <Search size={17} strokeWidth={2.1} />

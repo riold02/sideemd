@@ -255,6 +255,41 @@ export function useSidepanelState(repository: StorageRepository) {
     setActiveTab(note.id);
   }
 
+  async function handleCreateNotebook() {
+    const notebook = await repository.createNotebook('Untitled Notebook');
+    const next = await repository.getState();
+    patchState(next);
+    setSelectedNotebookId(notebook.id);
+    setActiveTab(HOME_TAB);
+  }
+
+  async function handleRenameNotebook() {
+    const notebook = state.notebooks[selectedNotebookId];
+    if (!notebook) return;
+    const name = window.prompt('Rename notebook', notebook.name);
+    if (name === null) return;
+    await repository.renameNotebook(notebook.id, name);
+    await refreshState();
+  }
+
+  async function handleDeleteNotebook() {
+    const notebook = state.notebooks[selectedNotebookId];
+    if (!notebook) return;
+    const message =
+      state.notebookOrder.length > 1
+        ? `Delete notebook "${notebook.name}" and move its notes into another notebook?`
+        : `Delete notebook "${notebook.name}"? A fresh default notebook will be created.`;
+    if (!window.confirm(message)) return;
+    await repository.deleteNotebook(notebook.id);
+    const next = await repository.getState();
+    patchState(next);
+    setSelectedNotebookId(
+      next.notebooks[selectedNotebookId] ? selectedNotebookId : (next.notebookOrder[0] ?? '')
+    );
+    syncOpenTabs(next);
+    setActiveTab(HOME_TAB);
+  }
+
   async function handleCreateSubnote(
     parentNoteId: string,
     title = 'Untitled Note',
@@ -451,6 +486,9 @@ export function useSidepanelState(repository: StorageRepository) {
     closeNoteTab,
     updateNote,
     handleCreateNote,
+    handleCreateNotebook,
+    handleRenameNotebook,
+    handleDeleteNotebook,
     handleCreateSubnote,
     handleDeleteNote,
     handleRestoreNote,

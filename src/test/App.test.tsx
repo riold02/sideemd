@@ -47,12 +47,12 @@ describe('App editor', () => {
     ).toBeInTheDocument();
     await openNotes();
     expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Notebooks' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search notes...')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Open note actions' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Note' })).toBeInTheDocument();
-    expect(screen.queryByText('Notebooks')).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText('Visual markdown editor')
     ).not.toBeInTheDocument();
@@ -168,6 +168,67 @@ describe('App editor', () => {
     expect(
       await screen.findByRole('button', { name: 'Delete Welcome' })
     ).toBeInTheDocument();
+  });
+
+  it('creates, renames, and deletes notebooks from the notes view', async () => {
+    const { chrome, store } = createChromeStorageMock();
+    vi.stubGlobal('chrome', chrome);
+    const prompt = vi
+      .fn()
+      .mockReturnValueOnce('Projects')
+      .mockReturnValueOnce('Delete me');
+    const confirm = vi.fn().mockReturnValue(true);
+    vi.stubGlobal('prompt', prompt);
+    vi.stubGlobal('confirm', confirm);
+
+    const { default: App } = await import('../sidepanel/App');
+    render(<App />);
+
+    await openNotes();
+    fireEvent.click(screen.getByRole('button', { name: 'Create notebook' }));
+
+    expect(
+      await screen.findByRole('button', { name: 'Open notebook Untitled Notebook' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Rename selected notebook' })
+    );
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notebooks).some((notebook) => notebook.name === 'Projects')
+      ).toBe(true);
+    });
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open notebook Projects' })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Rename selected notebook' })
+    );
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notebooks).some((notebook) => notebook.name === 'Delete me')
+      ).toBe(true);
+    });
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open notebook Delete me' })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Delete selected notebook' })
+    );
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notebooks).some((notebook) => notebook.name === 'Delete me')
+      ).toBe(false);
+    });
   });
 
   it('inserts a selected block below the hovered editor block', async () => {

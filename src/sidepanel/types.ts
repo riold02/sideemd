@@ -7,6 +7,11 @@ export interface HomeViewState {
   filteredNotes: Note[];
   activeNoteId: string;
   selectedNotebookId: string;
+  notebooks: Array<{
+    id: string;
+    name: string;
+    noteCount: number;
+  }>;
   isHomeMenuOpen: boolean;
   search: string;
   noteTagFilter: string;
@@ -17,6 +22,9 @@ export interface HomeViewState {
 export interface HomeViewActions {
   openNoteTab: (id: string) => void;
   handleCreateNote: () => Promise<void> | void;
+  handleCreateNotebook: () => Promise<void> | void;
+  handleRenameNotebook: () => Promise<void> | void;
+  handleDeleteNotebook: () => Promise<void> | void;
   handleDeleteNote: (id: string) => Promise<void> | void;
   handleRestoreNote: (id: string) => Promise<void> | void;
   updateNoteMetadata: (
@@ -28,6 +36,7 @@ export interface HomeViewActions {
     e: React.ChangeEvent<HTMLInputElement>
   ) => Promise<void> | void;
   toggleHomeMenu: () => void;
+  setSelectedNotebookId: (value: string) => void;
   setSearch: (value: string) => void;
   setNoteTagFilter: (value: string) => void;
   setShowTrash: (value: boolean) => void;

@@ -32,6 +32,7 @@ export default function App() {
   const {
     state,
     selectedNotebookId,
+    setSelectedNotebookId,
     activeTab,
     setActiveTab,
     openNoteIds,
@@ -53,6 +54,9 @@ export default function App() {
     closeNoteTab,
     updateNote,
     handleCreateNote,
+    handleCreateNotebook,
+    handleRenameNotebook,
+    handleDeleteNotebook,
     handleCreateSubnote,
     handleDeleteNote,
     handleRestoreNote,
@@ -177,6 +181,16 @@ export default function App() {
       filteredNotes,
       activeNoteId,
       selectedNotebookId,
+      notebooks: state.notebookOrder
+        .map((id) => state.notebooks[id])
+        .filter(Boolean)
+        .map((notebook) => ({
+          id: notebook.id,
+          name: notebook.name,
+          noteCount: Object.values(state.notes).filter(
+            (note) => note.notebookId === notebook.id && !note.deletedAt
+          ).length,
+        })),
       isHomeMenuOpen,
       search,
       noteTagFilter,
@@ -191,6 +205,8 @@ export default function App() {
       filteredNotes,
       activeNoteId,
       selectedNotebookId,
+      state.notebookOrder,
+      state.notebooks,
       isHomeMenuOpen,
       search,
       noteTagFilter,
@@ -203,12 +219,16 @@ export default function App() {
     () => ({
       openNoteTab,
       handleCreateNote,
+      handleCreateNotebook,
+      handleRenameNotebook,
+      handleDeleteNotebook,
       handleDeleteNote,
       handleRestoreNote,
       updateNoteMetadata,
       handleExport,
       handleImport,
       toggleHomeMenu: () => setIsHomeMenuOpen((value) => !value),
+      setSelectedNotebookId,
       setSearch,
       setNoteTagFilter,
       setShowTrash,
@@ -216,12 +236,16 @@ export default function App() {
     [
       openNoteTab,
       handleCreateNote,
+      handleCreateNotebook,
+      handleRenameNotebook,
+      handleDeleteNotebook,
       handleDeleteNote,
       handleRestoreNote,
       updateNoteMetadata,
       handleExport,
       handleImport,
       setIsHomeMenuOpen,
+      setSelectedNotebookId,
       setSearch,
       setNoteTagFilter,
       setShowTrash,
