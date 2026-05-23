@@ -19,6 +19,8 @@ import {
   appendChild,
   deleteNotebookFromState,
   getChromeStorage,
+  moveNotebookInState,
+  moveNoteInState,
   removeNoteSubtree,
   setNoteSubtreeDeleted,
   type ChromeStorageLike,
@@ -49,6 +51,15 @@ export interface StorageRepository {
   ): Promise<TrackingSettings>;
   renameNotebook(notebookId: string, name: string): Promise<Notebook | null>;
   deleteNotebook(notebookId: string): Promise<void>;
+  moveNotebook(notebookId: string, targetIndex: number): Promise<void>;
+  moveNote(
+    noteId: string,
+    destination: {
+      notebookId: string;
+      parentNoteId: string | null;
+      index: number;
+    }
+  ): Promise<Note | null>;
   searchNotes(query: string): Promise<Note[]>;
 }
 
@@ -258,6 +269,27 @@ export class ChromeStorageRepository implements StorageRepository {
     const next = deleteNotebookFromState(state, notebookId);
     if (!next) return;
     await this.saveState(next);
+  }
+
+  async moveNotebook(notebookId: string, targetIndex: number): Promise<void> {
+    const state = await this.getState();
+    if (!moveNotebookInState(state, notebookId, targetIndex)) return;
+    await this.saveState(state);
+  }
+
+  async moveNote(
+    noteId: string,
+    destination: {
+      notebookId: string;
+      parentNoteId: string | null;
+      index: number;
+    }
+  ): Promise<Note | null> {
+    const state = await this.getState();
+    const note = moveNoteInState(state, noteId, destination);
+    if (!note) return null;
+    await this.saveState(state);
+    return note;
   }
 
   async searchNotes(query: string): Promise<Note[]> {

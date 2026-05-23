@@ -13,6 +13,7 @@ import type { QuickFormat } from '../utils/editorFormat';
 
 interface Params {
   selectedNote: Note | null;
+  notebookName: string;
   selectedNoteAncestors: Note[];
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;
@@ -43,6 +44,7 @@ interface Params {
 
 export function useEditorViewProps({
   selectedNote,
+  notebookName,
   selectedNoteAncestors,
   isBlockMenuOpen,
   blockInsertTarget,
@@ -73,6 +75,7 @@ export function useEditorViewProps({
   const state = useMemo<EditorViewState>(
     () => ({
       selectedNote,
+      notebookName,
       noteAncestors: selectedNoteAncestors,
       isBlockMenuOpen,
       blockInsertTarget,
@@ -82,6 +85,7 @@ export function useEditorViewProps({
     }),
     [
       selectedNote,
+      notebookName,
       selectedNoteAncestors,
       isBlockMenuOpen,
       blockInsertTarget,

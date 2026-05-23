@@ -114,3 +114,121 @@ export function deleteNotebookFromState(
 
   return state;
 }
+
+export function moveNotebookInState(
+  state: AppState,
+  notebookId: string,
+  targetIndex: number
+) {
+  const currentIndex = state.notebookOrder.indexOf(notebookId);
+  if (currentIndex === -1) return null;
+
+  const nextIndex = Math.max(
+    0,
+    Math.min(targetIndex, state.notebookOrder.length - 1)
+  );
+  if (currentIndex === nextIndex) return state.notebookOrder;
+
+  const order = [...state.notebookOrder];
+  order.splice(currentIndex, 1);
+  const insertIndex =
+    currentIndex < nextIndex ? Math.max(0, nextIndex - 1) : nextIndex;
+  order.splice(insertIndex, 0, notebookId);
+  state.notebookOrder = order;
+  return order;
+}
+
+function removeFromCurrentLocation(state: AppState, noteId: string) {
+  const note = state.notes[noteId];
+  if (!note) return null;
+
+  if (note.parentNoteId) {
+    state.childOrderByNote[note.parentNoteId] = (
+      state.childOrderByNote[note.parentNoteId] ?? []
+    ).filter((id) => id !== noteId);
+  } else {
+    state.noteOrderByNotebook[note.notebookId] = (
+      state.noteOrderByNotebook[note.notebookId] ?? []
+    ).filter((id) => id !== noteId);
+  }
+
+  return note;
+}
+
+function assignNotebookToSubtree(
+  state: AppState,
+  noteId: string,
+  notebookId: string,
+  updatedAt: string
+) {
+  for (const id of [noteId, ...collectDescendantIds(state, noteId)]) {
+    const note = state.notes[id];
+    if (!note) continue;
+    note.notebookId = notebookId;
+    note.updatedAt = updatedAt;
+  }
+}
+
+export function moveNoteInState(
+  state: AppState,
+  noteId: string,
+  destination: {
+    notebookId: string;
+    parentNoteId: string | null;
+    index: number;
+  }
+) {
+  const note = state.notes[noteId];
+  if (!note || !state.notebooks[destination.notebookId]) return null;
+
+  const descendants = new Set(collectDescendantIds(state, noteId));
+  if (
+    destination.parentNoteId === noteId ||
+    (destination.parentNoteId && descendants.has(destination.parentNoteId))
+  ) {
+    return null;
+  }
+
+  if (destination.parentNoteId) {
+    const parent = state.notes[destination.parentNoteId];
+    if (!parent) return null;
+    destination.notebookId = parent.notebookId;
+  }
+
+  const sourceParentNoteId = note.parentNoteId;
+  const sourceNotebookId = note.notebookId;
+  const sourceCollection = sourceParentNoteId
+    ? state.childOrderByNote[sourceParentNoteId] ?? []
+    : state.noteOrderByNotebook[sourceNotebookId] ?? [];
+  const sourceIndex = sourceCollection.indexOf(noteId);
+
+  removeFromCurrentLocation(state, noteId);
+
+  const timestamp = nowIso();
+  assignNotebookToSubtree(state, noteId, destination.notebookId, timestamp);
+  state.notes[noteId].parentNoteId = destination.parentNoteId;
+  state.notes[noteId].updatedAt = timestamp;
+
+  const targetCollection = destination.parentNoteId
+    ? (state.childOrderByNote[destination.parentNoteId] =
+        state.childOrderByNote[destination.parentNoteId] ?? [])
+    : (state.noteOrderByNotebook[destination.notebookId] =
+        state.noteOrderByNotebook[destination.notebookId] ?? []);
+
+  const nextIndex = Math.max(
+    0,
+    Math.min(destination.index, targetCollection.length)
+  );
+  const insertIndex =
+    sourceParentNoteId === destination.parentNoteId &&
+    sourceNotebookId === destination.notebookId &&
+    sourceIndex > -1 &&
+    sourceIndex < nextIndex
+      ? nextIndex - 1
+      : nextIndex;
+  targetCollection.splice(insertIndex, 0, noteId);
+
+  state.notebooks[note.notebookId].updatedAt = timestamp;
+  state.notebooks[destination.notebookId].updatedAt = timestamp;
+  return state.notes[noteId];
+}

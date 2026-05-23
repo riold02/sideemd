@@ -245,14 +245,69 @@ export function useSidepanelState(repository: StorageRepository) {
     setState((prev) => withUpdatedNote(prev, noteId, updates));
   }
 
-  async function handleCreateNote() {
+  async function handleCreateNote(title = 'Untitled Note') {
     const notebookId = selectedNotebookId || state.notebookOrder[0];
     if (!notebookId) return;
-    const note = await repository.createNote(notebookId, 'Untitled Note');
+    const note = await repository.createNote(notebookId, title);
     patchState(await repository.getState());
     setOpenNoteIds((ids) => (ids.includes(note.id) ? ids : [...ids, note.id]));
     setActiveNoteId(note.id);
     setActiveTab(note.id);
+  }
+
+  async function handleRenameNote(noteId: string, title: string) {
+    await repository.updateNote(noteId, { title });
+    await refreshState();
+  }
+
+  async function handleMoveNote(
+    noteId: string,
+    destination: {
+      notebookId: string;
+      parentNoteId: string | null;
+      index: number;
+    }
+  ) {
+    await repository.moveNote(noteId, destination);
+    await refreshState();
+  }
+
+  async function handleCreateNotebook(name = 'Untitled Notebook') {
+    const notebook = await repository.createNotebook(name);
+    const next = await repository.getState();
+    patchState(next);
+    setSelectedNotebookId(notebook.id);
+    setActiveTab(HOME_TAB);
+  }
+
+  async function handleRenameNotebook(name: string) {
+    const notebook = state.notebooks[selectedNotebookId];
+    if (!notebook) return;
+    await repository.renameNotebook(notebook.id, name);
+    await refreshState();
+  }
+
+  async function handleDeleteNotebook() {
+    const notebook = state.notebooks[selectedNotebookId];
+    if (!notebook) return;
+    const message =
+      state.notebookOrder.length > 1
+        ? `Delete notebook "${notebook.name}" and move its notes into another notebook?`
+        : `Delete notebook "${notebook.name}"? A fresh default notebook will be created.`;
+    if (!window.confirm(message)) return;
+    await repository.deleteNotebook(notebook.id);
+    const next = await repository.getState();
+    patchState(next);
+    setSelectedNotebookId(
+      next.notebooks[selectedNotebookId] ? selectedNotebookId : (next.notebookOrder[0] ?? '')
+    );
+    syncOpenTabs(next);
+    setActiveTab(HOME_TAB);
+  }
+
+  async function handleMoveNotebook(id: string, index: number) {
+    await repository.moveNotebook(id, index);
+    await refreshState();
   }
 
   async function handleCreateSubnote(
@@ -282,7 +337,7 @@ export function useSidepanelState(repository: StorageRepository) {
     const descendantCount = collectDescendantIds(state, noteId).length;
     const message =
       descendantCount > 0
-        ? `Delete this note and ${descendantCount} subnote(s)?`
+        ? `Delete this note and ${descendantCount} subpage(s)?`
         : 'Delete this note?';
     if (!window.confirm(message)) return;
     await repository.deleteNote(noteId);
@@ -451,6 +506,12 @@ export function useSidepanelState(repository: StorageRepository) {
     closeNoteTab,
     updateNote,
     handleCreateNote,
+    handleRenameNote,
+    handleMoveNote,
+    handleCreateNotebook,
+    handleRenameNotebook,
+    handleDeleteNotebook,
+    handleMoveNotebook,
     handleCreateSubnote,
     handleDeleteNote,
     handleRestoreNote,

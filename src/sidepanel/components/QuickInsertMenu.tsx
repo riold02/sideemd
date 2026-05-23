@@ -27,7 +27,7 @@ interface Props {
 }
 
 const sectionOrder = [
-  'Subnotes',
+  'Subpages',
   'Text Style',
   'Basic Text',
   'Lists',
@@ -55,7 +55,7 @@ export default function QuickInsertMenu({
   return (
     <div className="block-insert-menu" role="menu">
       {sectionOrder.map((section) => {
-        if (section === 'Subnotes') {
+        if (section === 'Subpages') {
           if (!onCreateSubnote && !onOpenWikilinkMenu) return null;
           return (
             <div className="block-insert-group" key={section}>
@@ -65,7 +65,7 @@ export default function QuickInsertMenu({
                   <span className="block-option-icon" aria-hidden>
                     +
                   </span>
-                  <span>Create sub-note</span>
+                  <span>Create subpage</span>
                 </button>
               ) : null}
               {onOpenWikilinkMenu ? (
@@ -77,7 +77,7 @@ export default function QuickInsertMenu({
                   <span className="block-option-icon" aria-hidden>
                     ↗
                   </span>
-                  <span>Link to subnote</span>
+                  <span>Link to subpage</span>
                 </button>
               ) : null}
             </div>

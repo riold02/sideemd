@@ -24,6 +24,14 @@ describe('App editor', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Notes' }));
   }
 
+  async function openResearch() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Research' }));
+  }
+
+  async function openSettings() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+  }
+
   it('renders dashboard then opens the notes browser', async () => {
     const { chrome } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
@@ -39,12 +47,12 @@ describe('App editor', () => {
     ).toBeInTheDocument();
     await openNotes();
     expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Notebooks' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search notes...')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Open note actions' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Note' })).toBeInTheDocument();
-    expect(screen.queryByText('Notebooks')).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText('Visual markdown editor')
     ).not.toBeInTheDocument();
@@ -162,6 +170,60 @@ describe('App editor', () => {
     ).toBeInTheDocument();
   });
 
+  it('creates, renames, and deletes notebooks from the notes view', async () => {
+    const { chrome, store } = createChromeStorageMock();
+    vi.stubGlobal('chrome', chrome);
+    const confirm = vi.fn().mockReturnValue(true);
+    vi.stubGlobal('confirm', confirm);
+
+    const { default: App } = await import('../sidepanel/App');
+    render(<App />);
+
+    await openNotes();
+    fireEvent.click(screen.getByRole('button', { name: 'Create notebook' }));
+    fireEvent.change(screen.getByLabelText('Notebook name'), {
+      target: { value: 'Projects' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(
+      await screen.findByRole('button', { name: 'Open notebook Projects' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open notebook Projects' })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Rename selected notebook' })
+    );
+    const notebookNameInput = screen.getByLabelText('Notebook name');
+    fireEvent.change(notebookNameInput, {
+      target: { value: 'Delete me' },
+    });
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notebooks).some((notebook) => notebook.name === 'Delete me')
+      ).toBe(true);
+    });
+    fireEvent.blur(notebookNameInput);
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open notebook Delete me' })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Delete selected notebook' })
+    );
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notebooks).some((notebook) => notebook.name === 'Delete me')
+      ).toBe(false);
+    });
+  });
+
   it('inserts a selected block below the hovered editor block', async () => {
     const { chrome, store } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
@@ -191,6 +253,42 @@ describe('App editor', () => {
       },
       { timeout: 1000 }
     );
+  });
+
+  it('creates a named subpage from the editor quick insert menu', async () => {
+    const { chrome, store } = createChromeStorageMock();
+    vi.stubGlobal('chrome', chrome);
+    const prompt = vi.fn().mockReturnValue('Child page');
+    vi.stubGlobal('prompt', prompt);
+
+    const { default: App } = await import('../sidepanel/App');
+    render(<App />);
+
+    await openNotes();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open Welcome' })
+    );
+
+    const editor = await screen.findByLabelText('Visual markdown editor');
+    fireEvent.mouseMove(editor.querySelector('p') as Element);
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Insert block below' })
+    );
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Create subpage' }));
+
+    expect(prompt).toHaveBeenCalledWith('Subpage title', '');
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notes).some(
+          (note) =>
+            note.title === 'Child page' &&
+            note.parentNoteId &&
+            note.notebookId
+        )
+      ).toBe(true);
+    });
   });
 
   it('exposes heading levels 1 through 6 in the block insert menu', async () => {
@@ -238,7 +336,7 @@ describe('App editor', () => {
     const { default: App } = await import('../sidepanel/App');
     render(<App />);
 
-    fireEvent.click(await screen.findByTitle('Research'));
+    await openResearch();
     fireEvent.click(screen.getByRole('button', { name: /Manual/ }));
     fireEvent.change(screen.getByLabelText('Research keyword'), {
       target: { value: 'extension tracking' },
@@ -261,7 +359,7 @@ describe('App editor', () => {
     const { default: App } = await import('../sidepanel/App');
     render(<App />);
 
-    fireEvent.click(await screen.findByTitle('Research'));
+    await openResearch();
 
     await waitFor(() => {
       expect(store[STORAGE_KEY]).toBeTruthy();
@@ -295,7 +393,7 @@ describe('App editor', () => {
     const { default: App } = await import('../sidepanel/App');
     render(<App />);
 
-    fireEvent.click(await screen.findByTitle('Settings'));
+    await openSettings();
     fireEvent.click(screen.getByText('Pause'));
     fireEvent.change(screen.getByLabelText('Allowed tracking domains'), {
       target: { value: 'docs.example.test' },

@@ -7,6 +7,14 @@ export interface HomeViewState {
   filteredNotes: Note[];
   activeNoteId: string;
   selectedNotebookId: string;
+  notebooks: Array<{
+    id: string;
+    name: string;
+    noteCount: number;
+  }>;
+  notesById: AppState['notes'];
+  rootNoteIds: string[];
+  childOrderByNote: AppState['childOrderByNote'];
   isHomeMenuOpen: boolean;
   search: string;
   noteTagFilter: string;
@@ -16,7 +24,24 @@ export interface HomeViewState {
 
 export interface HomeViewActions {
   openNoteTab: (id: string) => void;
-  handleCreateNote: () => Promise<void> | void;
+  handleCreateNote: (title?: string) => Promise<void> | void;
+  handleRenameNote: (id: string, title: string) => Promise<void> | void;
+  handleMoveNote: (
+    id: string,
+    destination: {
+      notebookId: string;
+      parentNoteId: string | null;
+      index: number;
+    }
+  ) => Promise<void> | void;
+  handleCreateSubpage: (
+    parentNoteId: string,
+    title?: string
+  ) => Promise<Note | null> | Note | null | void;
+  handleCreateNotebook: (name?: string) => Promise<void> | void;
+  handleRenameNotebook: (name: string) => Promise<void> | void;
+  handleDeleteNotebook: () => Promise<void> | void;
+  handleMoveNotebook: (id: string, index: number) => Promise<void> | void;
   handleDeleteNote: (id: string) => Promise<void> | void;
   handleRestoreNote: (id: string) => Promise<void> | void;
   updateNoteMetadata: (
@@ -28,6 +53,7 @@ export interface HomeViewActions {
     e: React.ChangeEvent<HTMLInputElement>
   ) => Promise<void> | void;
   toggleHomeMenu: () => void;
+  setSelectedNotebookId: (value: string) => void;
   setSearch: (value: string) => void;
   setNoteTagFilter: (value: string) => void;
   setShowTrash: (value: boolean) => void;
@@ -54,6 +80,7 @@ export interface TablineActions {
 
 export interface EditorViewState {
   selectedNote: Note | null;
+  notebookName: string;
   noteAncestors: Note[];
   isBlockMenuOpen: boolean;
   blockInsertTarget: { top: number; signature: string } | null;

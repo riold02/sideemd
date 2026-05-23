@@ -1,18 +1,5 @@
-import {
-  Activity,
-  BookOpen,
-  FlaskConical,
-  LayoutDashboard,
-  Settings,
-  X,
-} from 'lucide-react';
-import {
-  ACTIVITY_TAB,
-  DASHBOARD_TAB,
-  HOME_TAB,
-  RESEARCH_TAB,
-  SETTINGS_TAB,
-} from '../editorConfig';
+import { LayoutDashboard, X } from 'lucide-react';
+import { DASHBOARD_TAB } from '../editorConfig';
 import type { TablineActions, TablineState } from '../types';
 
 interface Props {
@@ -34,10 +21,6 @@ export default function Tabline({ state, actions }: Props) {
     <nav className="tabline" aria-label="Open notes">
       {[
         { id: DASHBOARD_TAB, label: 'Dashboard', icon: LayoutDashboard },
-        { id: HOME_TAB, label: 'Notes', icon: BookOpen },
-        { id: RESEARCH_TAB, label: 'Research', icon: FlaskConical },
-        { id: ACTIVITY_TAB, label: 'Activity', icon: Activity },
-        { id: SETTINGS_TAB, label: 'Settings', icon: Settings },
       ].map(({ id, label, icon: Icon }) => (
         <button
           key={id}

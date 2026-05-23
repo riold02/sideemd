@@ -20,6 +20,7 @@ interface Props {
 export default function EditorView({ state, actions, config }: Props) {
   const {
     selectedNote,
+    notebookName,
     noteAncestors,
     isBlockMenuOpen,
     blockInsertTarget,
@@ -73,6 +74,7 @@ export default function EditorView({ state, actions, config }: Props) {
       {selectedNote ? (
         <>
           <NoteBreadcrumb
+            notebookName={notebookName}
             ancestors={noteAncestors}
             currentTitle={selectedNote.title}
             onHomeClick={onHomeClick}

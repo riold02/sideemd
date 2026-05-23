@@ -1,6 +1,7 @@
 import type { Note } from '../../lib/types';
 
 interface Props {
+  notebookName: string;
   ancestors: Note[];
   currentTitle: string;
   onHomeClick: () => void;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function NoteBreadcrumb({
+  notebookName,
   ancestors,
   currentTitle,
   onHomeClick,
@@ -18,6 +20,12 @@ export default function NoteBreadcrumb({
       <button type="button" className="breadcrumb-link" onClick={onHomeClick}>
         Home
       </button>
+      {notebookName ? (
+        <span className="breadcrumb-segment">
+          <span aria-hidden>&gt;</span>
+          <span className="breadcrumb-current">{notebookName}</span>
+        </span>
+      ) : null}
       {ancestors.map((note) => (
         <span key={note.id} className="breadcrumb-segment">
           <span aria-hidden>&gt;</span>
