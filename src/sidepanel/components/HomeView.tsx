@@ -1,18 +1,22 @@
+import { useMemo, useState, type DragEvent, type FormEvent } from 'react';
 import {
   BookCopy,
-  FileText,
+  ChevronDown,
+  ChevronRight,
   Download,
-  Upload,
-  Plus,
+  FileText,
   MoreVertical,
   Pencil,
   Pin,
+  Plus,
   RotateCcw,
   Search,
   Star,
   Tag,
   Trash2,
+  Upload,
 } from 'lucide-react';
+import type { Note } from '../../lib/types';
 import type {
   HomeViewActions,
   HomeViewFormatters,
@@ -25,12 +29,23 @@ interface Props {
   formatters: HomeViewFormatters;
 }
 
+interface TreeNode {
+  note: Note;
+  children: TreeNode[];
+}
+
+function clampTitle(value: string, fallback: string) {
+  return value.trim() || fallback;
+}
+
 export default function HomeView({ state, actions, formatters }: Props) {
   const {
-    filteredNotes,
     activeNoteId,
     selectedNotebookId,
     notebooks,
+    notesById,
+    rootNoteIds,
+    childOrderByNote,
     isHomeMenuOpen,
     search,
     noteTagFilter,
@@ -40,9 +55,13 @@ export default function HomeView({ state, actions, formatters }: Props) {
   const {
     openNoteTab,
     handleCreateNote,
+    handleRenameNote,
+    handleMoveNote,
+    handleCreateSubpage,
     handleCreateNotebook,
     handleRenameNotebook,
     handleDeleteNotebook,
+    handleMoveNotebook,
     handleDeleteNote,
     handleRestoreNote,
     updateNoteMetadata,
@@ -55,6 +74,417 @@ export default function HomeView({ state, actions, formatters }: Props) {
     setShowTrash,
   } = actions;
   const { formatNoteDate, createNoteSnippet } = formatters;
+  const [collapsedNoteIds, setCollapsedNoteIds] = useState<string[]>([]);
+  const [draftNotebookName, setDraftNotebookName] = useState('');
+  const [creatingNotebook, setCreatingNotebook] = useState(false);
+  const [editingNotebookId, setEditingNotebookId] = useState('');
+  const [draftNoteTitle, setDraftNoteTitle] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState('');
+  const [creatingParentId, setCreatingParentId] = useState<string | 'root' | null>(
+    null
+  );
+  const [draggedNotebookId, setDraggedNotebookId] = useState('');
+  const [draggedNoteId, setDraggedNoteId] = useState('');
+
+  const searchQuery = search.trim().toLowerCase();
+  const normalizedTag = noteTagFilter.trim().toLowerCase();
+  const hasFilters = Boolean(searchQuery || normalizedTag);
+
+  const visibleTree = useMemo(() => {
+    function buildNode(noteId: string): TreeNode | null {
+      const note = notesById[noteId];
+      if (
+        !note ||
+        note.notebookId !== selectedNotebookId ||
+        Boolean(note.deletedAt) !== showTrash
+      ) {
+        return null;
+      }
+
+      const children = (childOrderByNote[noteId] ?? [])
+        .map((childId) => buildNode(childId))
+        .filter((node): node is TreeNode => Boolean(node));
+
+      if (!hasFilters) {
+        return { note, children };
+      }
+
+      const matchesQuery =
+        !searchQuery ||
+        note.title.toLowerCase().includes(searchQuery) ||
+        note.contentMarkdown.toLowerCase().includes(searchQuery);
+      const matchesTag =
+        !normalizedTag ||
+        note.tags?.some((tag) => tag.toLowerCase() === normalizedTag);
+
+      return matchesQuery && matchesTag || children.length > 0
+        ? { note, children }
+        : null;
+    }
+
+    return rootNoteIds
+      .map((noteId) => buildNode(noteId))
+      .filter((node): node is TreeNode => Boolean(node));
+  }, [
+    childOrderByNote,
+    hasFilters,
+    normalizedTag,
+    notesById,
+    rootNoteIds,
+    searchQuery,
+    selectedNotebookId,
+    showTrash,
+  ]);
+
+  function toggleCollapsed(noteId: string) {
+    setCollapsedNoteIds((ids) =>
+      ids.includes(noteId) ? ids.filter((id) => id !== noteId) : [...ids, noteId]
+    );
+  }
+
+  function beginNotebookCreate() {
+    setCreatingNotebook(true);
+    setEditingNotebookId('');
+    setDraftNotebookName('');
+  }
+
+  function beginNotebookRename() {
+    const notebook = notebooks.find((item) => item.id === selectedNotebookId);
+    if (!notebook) return;
+    setEditingNotebookId(notebook.id);
+    setCreatingNotebook(false);
+    setDraftNotebookName(notebook.name);
+  }
+
+  async function submitNotebookForm(event: FormEvent) {
+    event.preventDefault();
+    const value = clampTitle(draftNotebookName, 'Untitled Notebook');
+    if (creatingNotebook) {
+      await handleCreateNotebook(value);
+    } else if (editingNotebookId) {
+      await handleRenameNotebook(value);
+    }
+    setCreatingNotebook(false);
+    setEditingNotebookId('');
+    setDraftNotebookName('');
+  }
+
+  function beginRootCreate() {
+    setCreatingParentId('root');
+    setEditingNoteId('');
+    setDraftNoteTitle('');
+  }
+
+  function beginSubpageCreate(parentNoteId: string) {
+    setCreatingParentId(parentNoteId);
+    setEditingNoteId('');
+    setDraftNoteTitle('');
+    setCollapsedNoteIds((ids) => ids.filter((id) => id !== parentNoteId));
+  }
+
+  function beginNoteRename(note: Note) {
+    setEditingNoteId(note.id);
+    setCreatingParentId(null);
+    setDraftNoteTitle(note.title);
+  }
+
+  async function submitRootPage(event: FormEvent) {
+    event.preventDefault();
+    await handleCreateNote(clampTitle(draftNoteTitle, 'Untitled Note'));
+    setCreatingParentId(null);
+    setDraftNoteTitle('');
+  }
+
+  async function submitSubpage(event: FormEvent, parentNoteId: string) {
+    event.preventDefault();
+    await handleCreateSubpage(parentNoteId, clampTitle(draftNoteTitle, 'Untitled Note'));
+    setCreatingParentId(null);
+    setDraftNoteTitle('');
+  }
+
+  async function submitRename(event: FormEvent, noteId: string) {
+    event.preventDefault();
+    await handleRenameNote(noteId, clampTitle(draftNoteTitle, 'Untitled Note'));
+    setEditingNoteId('');
+    setDraftNoteTitle('');
+  }
+
+  function siblingIdsFor(note: Note) {
+    return note.parentNoteId
+      ? childOrderByNote[note.parentNoteId] ?? []
+      : visibleTree.map((node) => node.note.id);
+  }
+
+  async function handleNotebookDrop(
+    event: DragEvent<HTMLButtonElement>,
+    notebookId: string,
+    notebookIndex: number
+  ) {
+    event.preventDefault();
+    if (draggedNotebookId) {
+      await handleMoveNotebook(draggedNotebookId, notebookIndex);
+      setDraggedNotebookId('');
+      return;
+    }
+    if (draggedNoteId) {
+      await handleMoveNote(draggedNoteId, {
+        notebookId,
+        parentNoteId: null,
+        index: 0,
+      });
+      setDraggedNoteId('');
+    }
+  }
+
+  async function handleNoteDrop(
+    event: DragEvent<HTMLDivElement>,
+    note: Note,
+    index: number
+  ) {
+    event.preventDefault();
+    if (!draggedNoteId || draggedNoteId === note.id) return;
+
+    await handleMoveNote(draggedNoteId, {
+      notebookId: note.notebookId,
+      parentNoteId: note.parentNoteId,
+      index,
+    });
+    setDraggedNoteId('');
+  }
+
+  async function handleRootDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (!draggedNoteId || !selectedNotebookId) return;
+    await handleMoveNote(draggedNoteId, {
+      notebookId: selectedNotebookId,
+      parentNoteId: null,
+      index: 0,
+    });
+    setDraggedNoteId('');
+  }
+
+  function renderNotebookChip(notebook: HomeViewState['notebooks'][number], index: number) {
+    const isEditing = editingNotebookId === notebook.id;
+    if (isEditing) {
+      return (
+        <form
+          key={notebook.id}
+          className="inline-rename-form"
+          onSubmit={submitNotebookForm}
+        >
+          <input
+            autoFocus
+            value={draftNotebookName}
+            onChange={(event) => setDraftNotebookName(event.target.value)}
+            aria-label="Notebook name"
+          />
+          <button type="submit">Save</button>
+        </form>
+      );
+    }
+
+    return (
+      <button
+        key={notebook.id}
+        className={`notebook-chip ${selectedNotebookId === notebook.id ? 'active' : ''}`}
+        onClick={() => setSelectedNotebookId(notebook.id)}
+        aria-label={`Open notebook ${notebook.name}`}
+        aria-pressed={selectedNotebookId === notebook.id}
+        draggable
+        onDragStart={() => setDraggedNotebookId(notebook.id)}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => void handleNotebookDrop(event, notebook.id, index)}
+      >
+        <span className="notebook-chip-main">
+          <BookCopy size={15} strokeWidth={2.1} />
+          <span className="notebook-chip-name">{notebook.name}</span>
+        </span>
+        <span className="notebook-chip-count">{notebook.noteCount}</span>
+      </button>
+    );
+  }
+
+  function renderTreeNode(node: TreeNode, depth: number) {
+    const { note, children } = node;
+    const hasAnyChildren = (childOrderByNote[note.id] ?? []).some((childId) => {
+      const child = notesById[childId];
+      return (
+        Boolean(child) &&
+        child.notebookId === selectedNotebookId &&
+        Boolean(child.deletedAt) === showTrash
+      );
+    });
+    const isCollapsed = collapsedNoteIds.includes(note.id);
+    const siblingIds = siblingIdsFor(note);
+    const targetIndex = siblingIds.indexOf(note.id);
+
+    return (
+      <li key={note.id} className="note-tree-node">
+        <div
+          className={`note-tree-row ${activeNoteId === note.id ? 'active' : ''}`}
+          style={{ paddingLeft: `${depth * 18}px` }}
+          draggable
+          onDragStart={() => setDraggedNoteId(note.id)}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => void handleNoteDrop(event, note, targetIndex)}
+        >
+          <button
+            className="tree-toggle-button"
+            onClick={() => toggleCollapsed(note.id)}
+            aria-label={hasAnyChildren ? `${isCollapsed ? 'Expand' : 'Collapse'} ${note.title}` : `${note.title} has no subpages`}
+            disabled={!hasAnyChildren}
+          >
+            {hasAnyChildren ? (
+              isCollapsed ? (
+                <ChevronRight size={14} strokeWidth={2.2} />
+              ) : (
+                <ChevronDown size={14} strokeWidth={2.2} />
+              )
+            ) : (
+              <span className="tree-toggle-spacer" />
+            )}
+          </button>
+          {editingNoteId === note.id ? (
+            <form
+              className="note-tree-main inline-tree-form"
+              onSubmit={(event) => void submitRename(event, note.id)}
+            >
+              <input
+                autoFocus
+                value={draftNoteTitle}
+                onChange={(event) => setDraftNoteTitle(event.target.value)}
+                aria-label={`Rename ${note.title}`}
+              />
+              <button type="submit">Save</button>
+            </form>
+          ) : (
+            <button
+              className="note-tree-main"
+              onClick={() => openNoteTab(note.id)}
+              aria-label={`Open ${note.title}`}
+            >
+              <FileText className="note-row-icon" size={16} strokeWidth={2.1} />
+              <span className="note-row-copy">
+                <span className="note-row-title">{note.title}</span>
+                <span className="note-row-meta">
+                  {formatNoteDate(note.updatedAt)} -{' '}
+                  {createNoteSnippet(note.contentMarkdown)}
+                </span>
+                {note.tags?.length ? (
+                  <span className="tag-row">
+                    {note.tags.map((tag) => (
+                      <span className="tag-chip" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+          )}
+          <span className="note-row-actions">
+            {!showTrash ? (
+              <>
+                <button
+                  className="note-tool-button"
+                  onClick={() => beginSubpageCreate(note.id)}
+                  aria-label={`Create subpage under ${note.title}`}
+                >
+                  <Plus size={15} strokeWidth={2.1} />
+                </button>
+                <button
+                  className="note-tool-button"
+                  onClick={() => beginNoteRename(note)}
+                  aria-label={`Rename ${note.title}`}
+                >
+                  <Pencil size={15} strokeWidth={2.1} />
+                </button>
+                <button
+                  className={`note-tool-button ${note.pinned ? 'active' : ''}`}
+                  onClick={() =>
+                    void updateNoteMetadata(note.id, {
+                      pinned: !note.pinned,
+                    })
+                  }
+                  aria-label={`${note.pinned ? 'Unpin' : 'Pin'} ${note.title}`}
+                >
+                  <Pin size={15} strokeWidth={2.1} />
+                </button>
+                <button
+                  className={`note-tool-button ${note.favorite ? 'active' : ''}`}
+                  onClick={() =>
+                    void updateNoteMetadata(note.id, {
+                      favorite: !note.favorite,
+                    })
+                  }
+                  aria-label={`${note.favorite ? 'Unfavorite' : 'Favorite'} ${note.title}`}
+                >
+                  <Star size={15} strokeWidth={2.1} />
+                </button>
+                <button
+                  className="note-tool-button"
+                  onClick={() => {
+                    const nextTags = window
+                      .prompt(
+                        'Tags separated by commas',
+                        note.tags?.join(', ') ?? ''
+                      )
+                      ?.split(',')
+                      .map((tag) => tag.trim())
+                      .filter(Boolean);
+                    if (nextTags) {
+                      void updateNoteMetadata(note.id, { tags: nextTags });
+                    }
+                  }}
+                  aria-label={`Tag ${note.title}`}
+                >
+                  <Tag size={15} strokeWidth={2.1} />
+                </button>
+                <button
+                  className="note-delete-button"
+                  onClick={() => void handleDeleteNote(note.id)}
+                  aria-label={`Delete ${note.title}`}
+                >
+                  <Trash2 size={16} strokeWidth={2.1} />
+                </button>
+              </>
+            ) : (
+              <button
+                className="note-tool-button"
+                onClick={() => void handleRestoreNote(note.id)}
+                aria-label={`Restore ${note.title}`}
+              >
+                <RotateCcw size={16} strokeWidth={2.1} />
+              </button>
+            )}
+          </span>
+        </div>
+
+        {creatingParentId === note.id ? (
+          <form
+            className="inline-tree-form tree-child-form"
+            style={{ marginLeft: `${depth * 18 + 28}px` }}
+            onSubmit={(event) => void submitSubpage(event, note.id)}
+          >
+            <input
+              autoFocus
+              value={draftNoteTitle}
+              onChange={(event) => setDraftNoteTitle(event.target.value)}
+              placeholder="Subpage title"
+              aria-label="Subpage title"
+            />
+            <button type="submit">Add</button>
+          </form>
+        ) : null}
+
+        {hasAnyChildren && !isCollapsed ? (
+          <ul className="note-tree-children">
+            {children.map((child) => renderTreeNode(child, depth + 1))}
+          </ul>
+        ) : null}
+      </li>
+    );
+  }
 
   return (
     <main className="file-browser">
@@ -64,7 +494,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
           <div className="home-actions">
             <button
               className="primary-note-button"
-              onClick={() => void handleCreateNote()}
+              onClick={beginRootCreate}
               disabled={!selectedNotebookId}
             >
               <Plus size={16} strokeWidth={2.4} />
@@ -90,7 +520,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
                     <input
                       type="file"
                       accept="application/json"
-                      onChange={(e) => void handleImport(e)}
+                      onChange={(event) => void handleImport(event)}
                     />
                   </label>
                 </div>
@@ -105,7 +535,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
             <div className="home-actions">
               <button
                 className="icon-button compact"
-                onClick={() => void handleCreateNotebook()}
+                onClick={beginNotebookCreate}
                 aria-label="Create notebook"
                 title="Create notebook"
               >
@@ -113,7 +543,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
               </button>
               <button
                 className="icon-button compact"
-                onClick={() => void handleRenameNotebook()}
+                onClick={beginNotebookRename}
                 aria-label="Rename selected notebook"
                 title="Rename selected notebook"
                 disabled={!selectedNotebookId}
@@ -131,22 +561,20 @@ export default function HomeView({ state, actions, formatters }: Props) {
               </button>
             </div>
           </div>
+          {creatingNotebook ? (
+            <form className="inline-rename-form" onSubmit={submitNotebookForm}>
+              <input
+                autoFocus
+                value={draftNotebookName}
+                onChange={(event) => setDraftNotebookName(event.target.value)}
+                placeholder="Notebook name"
+                aria-label="Notebook name"
+              />
+              <button type="submit">Add</button>
+            </form>
+          ) : null}
           <div className="notebook-list" role="list">
-            {notebooks.map((notebook) => (
-              <button
-                key={notebook.id}
-                className={`notebook-chip ${selectedNotebookId === notebook.id ? 'active' : ''}`}
-                onClick={() => setSelectedNotebookId(notebook.id)}
-                aria-label={`Open notebook ${notebook.name}`}
-                aria-pressed={selectedNotebookId === notebook.id}
-              >
-                <span className="notebook-chip-main">
-                  <BookCopy size={15} strokeWidth={2.1} />
-                  <span className="notebook-chip-name">{notebook.name}</span>
-                </span>
-                <span className="notebook-chip-count">{notebook.noteCount}</span>
-              </button>
-            ))}
+            {notebooks.map((notebook, index) => renderNotebookChip(notebook, index))}
           </div>
         </section>
 
@@ -154,7 +582,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
           <Search size={17} strokeWidth={2.1} />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder="Search notes..."
             className="search-input"
           />
@@ -189,103 +617,29 @@ export default function HomeView({ state, actions, formatters }: Props) {
           </select>
         </div>
 
-        <ul className="note-list">
-          {filteredNotes.map((note) => (
-            <li
-              key={note.id}
-              className={activeNoteId === note.id ? 'active' : ''}
-            >
-              <button
-                className="note-row-main"
-                onClick={() => openNoteTab(note.id)}
-                aria-label={`Open ${note.title}`}
-              >
-                <FileText
-                  className="note-row-icon"
-                  size={17}
-                  strokeWidth={2.1}
-                />
-                <span className="note-row-copy">
-                  <span className="note-row-title">{note.title}</span>
-                  <span className="note-row-meta">
-                    {formatNoteDate(note.updatedAt)} -{' '}
-                    {createNoteSnippet(note.contentMarkdown)}
-                  </span>
-                  {note.tags?.length ? (
-                    <span className="tag-row">
-                      {note.tags.map((tag) => (
-                        <span className="tag-chip" key={tag}>
-                          {tag}
-                        </span>
-                      ))}
-                    </span>
-                  ) : null}
-                </span>
-              </button>
-              <span className="note-row-actions">
-                {!showTrash ? (
-                  <>
-                    <button
-                      className={`note-tool-button ${note.pinned ? 'active' : ''}`}
-                      onClick={() =>
-                        void updateNoteMetadata(note.id, {
-                          pinned: !note.pinned,
-                        })
-                      }
-                      aria-label={`${note.pinned ? 'Unpin' : 'Pin'} ${note.title}`}
-                    >
-                      <Pin size={15} strokeWidth={2.1} />
-                    </button>
-                    <button
-                      className={`note-tool-button ${note.favorite ? 'active' : ''}`}
-                      onClick={() =>
-                        void updateNoteMetadata(note.id, {
-                          favorite: !note.favorite,
-                        })
-                      }
-                      aria-label={`${note.favorite ? 'Unfavorite' : 'Favorite'} ${note.title}`}
-                    >
-                      <Star size={15} strokeWidth={2.1} />
-                    </button>
-                    <button
-                      className="note-tool-button"
-                      onClick={() => {
-                        const tags = window
-                          .prompt(
-                            'Tags separated by commas',
-                            note.tags?.join(', ') ?? ''
-                          )
-                          ?.split(',')
-                          .map((tag) => tag.trim())
-                          .filter(Boolean);
-                        if (tags) {
-                          void updateNoteMetadata(note.id, { tags });
-                        }
-                      }}
-                      aria-label={`Tag ${note.title}`}
-                    >
-                      <Tag size={15} strokeWidth={2.1} />
-                    </button>
-                    <button
-                      className="note-delete-button"
-                      onClick={() => void handleDeleteNote(note.id)}
-                      aria-label={`Delete ${note.title}`}
-                    >
-                      <Trash2 size={16} strokeWidth={2.1} />
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="note-tool-button"
-                    onClick={() => void handleRestoreNote(note.id)}
-                    aria-label={`Restore ${note.title}`}
-                  >
-                    <RotateCcw size={16} strokeWidth={2.1} />
-                  </button>
-                )}
-              </span>
-            </li>
-          ))}
+        {creatingParentId === 'root' ? (
+          <form className="inline-tree-form root-page-form" onSubmit={submitRootPage}>
+            <input
+              autoFocus
+              value={draftNoteTitle}
+              onChange={(event) => setDraftNoteTitle(event.target.value)}
+              placeholder="Page title"
+              aria-label="Page title"
+            />
+            <button type="submit">Add</button>
+          </form>
+        ) : null}
+
+        <div
+          className="tree-root-dropzone"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => void handleRootDrop(event)}
+        >
+          Drop here to move a page to the notebook root
+        </div>
+
+        <ul className="note-tree">
+          {visibleTree.map((node) => renderTreeNode(node, 0))}
         </ul>
       </section>
     </main>

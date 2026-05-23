@@ -173,12 +173,7 @@ describe('App editor', () => {
   it('creates, renames, and deletes notebooks from the notes view', async () => {
     const { chrome, store } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
-    const prompt = vi
-      .fn()
-      .mockReturnValueOnce('Projects')
-      .mockReturnValueOnce('Delete me');
     const confirm = vi.fn().mockReturnValue(true);
-    vi.stubGlobal('prompt', prompt);
     vi.stubGlobal('confirm', confirm);
 
     const { default: App } = await import('../sidepanel/App');
@@ -186,21 +181,14 @@ describe('App editor', () => {
 
     await openNotes();
     fireEvent.click(screen.getByRole('button', { name: 'Create notebook' }));
+    fireEvent.change(screen.getByLabelText('Notebook name'), {
+      target: { value: 'Projects' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(
-      await screen.findByRole('button', { name: 'Open notebook Untitled Notebook' })
+      await screen.findByRole('button', { name: 'Open notebook Projects' })
     ).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Rename selected notebook' })
-    );
-
-    await waitFor(() => {
-      const state = store[STORAGE_KEY] as AppState;
-      expect(
-        Object.values(state.notebooks).some((notebook) => notebook.name === 'Projects')
-      ).toBe(true);
-    });
 
     fireEvent.click(
       await screen.findByRole('button', { name: 'Open notebook Projects' })
@@ -208,6 +196,10 @@ describe('App editor', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Rename selected notebook' })
     );
+    fireEvent.change(screen.getByLabelText('Notebook name'), {
+      target: { value: 'Delete me' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       const state = store[STORAGE_KEY] as AppState;

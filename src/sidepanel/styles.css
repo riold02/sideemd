@@ -184,6 +184,27 @@ ul {
   gap: 8px;
 }
 
+.inline-rename-form,
+.inline-tree-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-rename-form {
+  margin-bottom: 8px;
+}
+
+.inline-rename-form input,
+.inline-tree-form input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #c5ced8;
+  border-radius: 8px;
+  background: #fff;
+  padding: 7px 8px;
+}
+
 .notebook-chip {
   display: inline-flex;
   align-items: center;
@@ -224,6 +245,18 @@ ul {
     11px/1.4 ui-sans-serif,
     system-ui,
     sans-serif;
+}
+
+.tree-root-dropzone {
+  margin-top: 10px;
+  border: 1px dashed #c5ced8;
+  border-radius: 10px;
+  color: #667789;
+  font:
+    12px/1.35 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  padding: 8px 10px;
 }
 
 .primary-note-button {
@@ -712,6 +745,70 @@ button,
 }
 
 .note-list {
+  margin-top: 8px;
+}
+
+.note-tree,
+.note-tree-children {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.note-tree-node {
+  display: grid;
+  gap: 6px;
+}
+
+.note-tree-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 56px;
+  border-radius: 10px;
+  padding: 6px 8px;
+}
+
+.note-tree-row.active {
+  background: #eef5ff;
+}
+
+.tree-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 0;
+}
+
+.tree-toggle-button:disabled {
+  cursor: default;
+}
+
+.tree-toggle-spacer {
+  width: 14px;
+  height: 14px;
+}
+
+.note-tree-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
+
+.tree-child-form,
+.root-page-form {
   margin-top: 8px;
 }
 
