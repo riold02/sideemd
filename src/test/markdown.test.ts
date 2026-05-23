@@ -53,7 +53,7 @@ describe('resolveBlockInsertHover', () => {
 });
 
 describe('replaceBlockWithMarkdown', () => {
-  it('replaces a slash trigger line with a subnote link list item', () => {
+  it('replaces a slash trigger line with a subpage link list item', () => {
     const markdown = ['Intro', '/', 'Outro'].join('\n');
     const next = replaceBlockWithMarkdown(
       markdown,

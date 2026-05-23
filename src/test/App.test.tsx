@@ -24,6 +24,14 @@ describe('App editor', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Notes' }));
   }
 
+  async function openResearch() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Research' }));
+  }
+
+  async function openSettings() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+  }
+
   it('renders dashboard then opens the notes browser', async () => {
     const { chrome } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
@@ -238,7 +246,7 @@ describe('App editor', () => {
     const { default: App } = await import('../sidepanel/App');
     render(<App />);
 
-    fireEvent.click(await screen.findByTitle('Research'));
+    await openResearch();
     fireEvent.click(screen.getByRole('button', { name: /Manual/ }));
     fireEvent.change(screen.getByLabelText('Research keyword'), {
       target: { value: 'extension tracking' },
@@ -261,7 +269,7 @@ describe('App editor', () => {
     const { default: App } = await import('../sidepanel/App');
     render(<App />);
 
-    fireEvent.click(await screen.findByTitle('Research'));
+    await openResearch();
 
     await waitFor(() => {
       expect(store[STORAGE_KEY]).toBeTruthy();
@@ -295,7 +303,7 @@ describe('App editor', () => {
     const { default: App } = await import('../sidepanel/App');
     render(<App />);
 
-    fireEvent.click(await screen.findByTitle('Settings'));
+    await openSettings();
     fireEvent.click(screen.getByText('Pause'));
     fireEvent.change(screen.getByLabelText('Allowed tracking domains'), {
       target: { value: 'docs.example.test' },

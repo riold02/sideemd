@@ -190,7 +190,7 @@ export function useEditorBlockInsert({
   async function createSubnoteAtCurrentBlock() {
     if (!selectedNote || !blockInsertTarget) return;
 
-    const created = await createSubnote('Untitled Note');
+    const created = await createSubnote('Untitled Page');
     if (!created) return;
 
     const linkLine = `- ${buildNoteLinkMarkdown(created.title, created.id)}`;

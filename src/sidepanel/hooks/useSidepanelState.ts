@@ -282,7 +282,7 @@ export function useSidepanelState(repository: StorageRepository) {
     const descendantCount = collectDescendantIds(state, noteId).length;
     const message =
       descendantCount > 0
-        ? `Delete this note and ${descendantCount} subnote(s)?`
+        ? `Delete this note and ${descendantCount} subpage(s)?`
         : 'Delete this note?';
     if (!window.confirm(message)) return;
     await repository.deleteNote(noteId);

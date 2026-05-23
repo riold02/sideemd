@@ -1,6 +1,17 @@
-import { BookOpen, FileText, FlaskConical } from 'lucide-react';
+import {
+  Activity,
+  BookOpen,
+  FileText,
+  FlaskConical,
+  Settings,
+} from 'lucide-react';
 import type { AppState } from '../../lib/types';
-import { HOME_TAB, RESEARCH_TAB } from '../editorConfig';
+import {
+  ACTIVITY_TAB,
+  HOME_TAB,
+  RESEARCH_TAB,
+  SETTINGS_TAB,
+} from '../editorConfig';
 
 interface Props {
   state: AppState;
@@ -30,40 +41,78 @@ export default function DashboardView({ state, onOpenView }: Props) {
       <header className="view-header">
         <h2>Dashboard</h2>
       </header>
-      <section className="metric-grid" aria-label="Workspace totals">
-        <article>
+      <section className="dashboard-stats" aria-label="Workspace totals">
+        <article className="dashboard-stat-card">
           <FileText size={17} />
           <strong>{notes.length}</strong>
           <span>Pages</span>
         </article>
-        <article>
+        <article className="dashboard-stat-card">
           <BookOpen size={17} />
           <strong>{notes.length}</strong>
           <span>Notes</span>
         </article>
-        <article>
+        <article className="dashboard-stat-card">
           <FlaskConical size={17} />
           <strong>{todayLogs.length}</strong>
           <span>Research today</span>
         </article>
-      </section>
-      <section className="dashboard-summary">
-        <div>
+        <article className="dashboard-stat-card dashboard-summary-card">
           <span>Top website</span>
           <strong>
             {topWebsite ? `${topWebsite[0]} (${topWebsite[1]})` : '-'}
           </strong>
-        </div>
-        <div>
+        </article>
+        <article className="dashboard-stat-card dashboard-summary-card">
           <span>Top keyword</span>
           <strong>
             {topKeyword ? `${topKeyword[0]} (${topKeyword[1]})` : '-'}
           </strong>
-        </div>
+        </article>
       </section>
       <section className="quick-actions" aria-label="Quick access">
-        <button onClick={() => onOpenView(HOME_TAB)}>Pages and notes</button>
-        <button onClick={() => onOpenView(RESEARCH_TAB)}>Research log</button>
+        <div className="quick-actions-header">
+          <h3>Quick actions</h3>
+          <span>Open core workspace views.</span>
+        </div>
+        <div className="quick-action-grid">
+          {[
+            {
+              label: 'Notes',
+              icon: BookOpen,
+              tab: HOME_TAB,
+            },
+            {
+              label: 'Research',
+              icon: FlaskConical,
+              tab: RESEARCH_TAB,
+            },
+            {
+              label: 'Activity',
+              icon: Activity,
+              tab: ACTIVITY_TAB,
+            },
+            {
+              label: 'Settings',
+              icon: Settings,
+              tab: SETTINGS_TAB,
+            },
+          ].map(({ label, icon: Icon, tab }) => (
+            <button
+              key={label}
+              className="quick-action-tile"
+              aria-label={label}
+              onClick={() => onOpenView(tab)}
+            >
+              <span className="quick-action-icon">
+                <Icon size={18} />
+              </span>
+              <span className="quick-action-copy">
+                <strong>{label}</strong>
+              </span>
+            </button>
+          ))}
+        </div>
       </section>
     </main>
   );

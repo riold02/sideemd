@@ -17,7 +17,7 @@ export default function WikilinkMenu({ top, left, options, onSelect }: Props) {
       className="wikilink-menu"
       style={{ top, left }}
       role="listbox"
-      aria-label="Link to subnote"
+      aria-label="Link to subpage"
     >
       {options.map((option) => (
         <button
@@ -28,7 +28,7 @@ export default function WikilinkMenu({ top, left, options, onSelect }: Props) {
           onClick={() => onSelect(option)}
         >
           {option.kind === 'create'
-            ? `Create subnote “${option.title}”`
+            ? `Create subpage “${option.title}”`
             : option.title}
         </button>
       ))}

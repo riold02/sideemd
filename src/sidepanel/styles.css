@@ -692,14 +692,13 @@ button,
     sans-serif;
 }
 
-.metric-grid {
+.dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
 }
 
-.metric-grid article,
-.dashboard-summary > div {
+.dashboard-stat-card {
   display: grid;
   gap: 4px;
   min-width: 0;
@@ -709,15 +708,22 @@ button,
   padding: 10px;
 }
 
-.metric-grid strong {
+.dashboard-stat-card:nth-child(-n + 3) {
+  grid-column: span 2;
+}
+
+.dashboard-summary-card {
+  grid-column: span 3;
+}
+
+.dashboard-stats strong {
   font:
     700 24px/1 ui-sans-serif,
     system-ui,
     sans-serif;
 }
 
-.metric-grid span,
-.dashboard-summary span,
+.dashboard-stats span,
 .research-list span,
 .research-list time,
 .activity-list time {
@@ -728,15 +734,92 @@ button,
     sans-serif;
 }
 
-.dashboard-summary {
+.quick-actions {
   display: grid;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
-.quick-actions {
-  flex-wrap: wrap;
-  margin-top: 12px;
+.quick-actions-header {
+  display: grid;
+  gap: 1px;
+}
+
+.quick-actions-header h3 {
+  margin: 0;
+  font:
+    700 12px/1.2 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.quick-actions-header span,
+.quick-action-copy small {
+  color: #667789;
+  font:
+    11px/1.25 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.quick-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quick-action-tile {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  text-align: center;
+}
+
+.quick-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #dbe2ea;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 14px rgba(31, 41, 55, 0.05);
+}
+
+.quick-action-tile:hover .quick-action-icon,
+.quick-action-tile:focus-visible .quick-action-icon {
+  border-color: #9fc4ff;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+}
+
+.quick-action-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  max-width: 72px;
+}
+
+.quick-action-copy strong {
+  font:
+    700 11px/1.15 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+@media (max-width: 640px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-stat-card:nth-child(-n + 3),
+  .dashboard-summary-card {
+    grid-column: span 1;
+  }
 }
 
 .inline-create-form {
