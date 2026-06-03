@@ -374,7 +374,7 @@ export class ChromeStorageRepository implements StorageRepository {
           'tracking.updated',
           'tracking',
           'settings',
-          'Research tracking'
+          'Session tracking'
         )
       )
     );

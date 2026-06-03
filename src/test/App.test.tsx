@@ -25,7 +25,9 @@ describe('App editor', () => {
   }
 
   async function openResearch() {
-    fireEvent.click(await screen.findByRole('button', { name: 'Research' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Session Tracking' })
+    );
   }
 
   async function openSettings() {
@@ -255,7 +257,7 @@ describe('App editor', () => {
     );
   });
 
-  it('creates a named subpage from the editor quick insert menu', async () => {
+  it('creates a named page from the editor quick insert menu', async () => {
     const { chrome, store } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
     const prompt = vi.fn().mockReturnValue('Child page');
@@ -274,9 +276,9 @@ describe('App editor', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Insert block below' })
     );
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Create subpage' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Create Page' }));
 
-    expect(prompt).toHaveBeenCalledWith('Subpage title', '');
+    expect(prompt).toHaveBeenCalledWith('Page title', '');
 
     await waitFor(() => {
       const state = store[STORAGE_KEY] as AppState;
@@ -329,7 +331,7 @@ describe('App editor', () => {
     ).toBeInTheDocument();
   });
 
-  it('creates research logs from the workspace view', async () => {
+  it('creates tracking entries from the workspace view', async () => {
     const { chrome } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
 
@@ -338,13 +340,13 @@ describe('App editor', () => {
 
     await openResearch();
     fireEvent.click(screen.getByRole('button', { name: /Manual/ }));
-    fireEvent.change(screen.getByLabelText('Research keyword'), {
+    fireEvent.change(screen.getByLabelText('Tracking title'), {
       target: { value: 'extension tracking' },
     });
-    fireEvent.change(screen.getByLabelText('Research website'), {
+    fireEvent.change(screen.getByLabelText('Tracking website'), {
       target: { value: 'developer.chrome.com' },
     });
-    fireEvent.click(screen.getByLabelText('Add research log'));
+    fireEvent.click(screen.getByLabelText('Add tracking entry'));
 
     expect(await screen.findByText('extension tracking')).toBeInTheDocument();
     expect(screen.getAllByText('developer.chrome.com').length).toBeGreaterThan(
@@ -352,7 +354,7 @@ describe('App editor', () => {
     );
   });
 
-  it('shows research logs created outside the side panel state', async () => {
+  it('shows tracking entries created outside the side panel state', async () => {
     const { chrome, store } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
 
@@ -382,7 +384,7 @@ describe('App editor', () => {
     });
 
     expect(
-      await screen.findByText('automatic research event')
+      await screen.findByText('Research page')
     ).toBeInTheDocument();
   });
 

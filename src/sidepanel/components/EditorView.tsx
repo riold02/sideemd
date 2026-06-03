@@ -32,7 +32,6 @@ export default function EditorView({ state, actions, config }: Props) {
     updateNote,
     handleEditorMouseMove,
     setIsBlockMenuOpen,
-    setBlockInsertTarget,
     insertBlockBelowCurrentTarget,
     applyQuickFormatFromMenu,
     applySelectionFormat,
@@ -44,7 +43,6 @@ export default function EditorView({ state, actions, config }: Props) {
     onHomeClick,
     createSubnoteAtCurrentBlock,
     onSelectWikilink,
-    onOpenWikilinkMenu,
     openNoteTab,
     setError,
   } = actions;
@@ -132,11 +130,6 @@ export default function EditorView({ state, actions, config }: Props) {
                     onTextColor={applyTextColorFromMenu}
                     onBackgroundColor={applyBackgroundColorFromMenu}
                     onCreateSubnote={() => void createSubnoteAtCurrentBlock()}
-                    onOpenWikilinkMenu={() => {
-                      setIsBlockMenuOpen(false);
-                      setBlockInsertTarget(null);
-                      onOpenWikilinkMenu();
-                    }}
                   />
                 ) : null}
               </div>

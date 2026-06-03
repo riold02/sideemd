@@ -9,9 +9,9 @@ const labels: Record<ActivityEntry['action'], string> = {
   'note.updated': 'Updated note',
   'note.deleted': 'Moved note to trash',
   'note.restored': 'Restored note',
-  'research.created': 'Added research log',
-  'research.deleted': 'Deleted research log',
-  'research.cleared': 'Cleared research logs',
+  'research.created': 'Added tracking entry',
+  'research.deleted': 'Deleted tracking entry',
+  'research.cleared': 'Cleared session tracking',
   'tracking.updated': 'Updated tracking settings',
 };
 

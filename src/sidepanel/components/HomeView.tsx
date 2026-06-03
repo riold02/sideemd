@@ -267,7 +267,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
 
     if (parentTitle) {
       if (!note.contentMarkdown.trim() || snippet === 'Untitled Note') {
-        return `Subpage in ${parentTitle}`;
+        return `Page in ${parentTitle}`;
       }
       return `${parentTitle} · ${snippet}`;
     }
@@ -467,7 +467,7 @@ export default function HomeView({ state, actions, formatters }: Props) {
                 <button
                   className="note-tool-button"
                   onClick={() => beginSubpageCreate(note.id)}
-                  aria-label={`Create subpage under ${note.title}`}
+                  aria-label={`Create page under ${note.title}`}
                 >
                   <Plus size={15} strokeWidth={2.1} />
                 </button>
@@ -551,8 +551,8 @@ export default function HomeView({ state, actions, formatters }: Props) {
               autoFocus
               value={draftNoteTitle}
               onChange={(event) => setDraftNoteTitle(event.target.value)}
-              placeholder="Subpage title"
-              aria-label="Subpage title"
+              placeholder="Page title"
+              aria-label="Page title"
             />
             <button type="button" onClick={() => void commitSubpage(note.id)}>
               Add

@@ -7,6 +7,7 @@ import {
 let lastPageCapture = '';
 let lastPromptCapture = { key: '', at: 0 };
 let promptDraft = '';
+let navigationCaptureInstalled = false;
 
 const CHATGPT_PROMPT_SELECTOR =
   '#prompt-textarea, textarea[data-testid="prompt-textarea"], textarea, [contenteditable="true"][role="textbox"], [contenteditable="true"]';
@@ -43,6 +44,40 @@ function captureVisiblePage() {
 
   lastPageCapture = captureKey;
   sendCapture(query, url);
+}
+
+function schedulePageCapture() {
+  for (const delay of [0, 300, 1000]) {
+    window.setTimeout(captureVisiblePage, delay);
+  }
+}
+
+function installNavigationCapture() {
+  if (navigationCaptureInstalled) return;
+  navigationCaptureInstalled = true;
+
+  const wrapHistoryMethod = (method: 'pushState' | 'replaceState') => {
+    const original = history[method];
+    history[method] = function patchedHistoryMethod(...args) {
+      const result = original.apply(this, args);
+      schedulePageCapture();
+      return result;
+    };
+  };
+
+  wrapHistoryMethod('pushState');
+  wrapHistoryMethod('replaceState');
+  window.addEventListener('popstate', schedulePageCapture);
+  window.addEventListener('hashchange', schedulePageCapture);
+
+  const title = document.querySelector('title');
+  if (title) {
+    new MutationObserver(schedulePageCapture).observe(title, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
 }
 
 function searchControlLabel(control: HTMLInputElement) {
@@ -243,13 +278,15 @@ function installChatGptPromptCapture() {
 }
 
 function captureResearch() {
+  installNavigationCapture();
+  captureVisiblePage();
+
   if (isChatGptResearchUrl(window.location.href)) {
     installChatGptPromptCapture();
     return;
   }
 
   installSubmittedSearchCapture();
-  captureVisiblePage();
 }
 
 if (document.readyState === 'loading') {

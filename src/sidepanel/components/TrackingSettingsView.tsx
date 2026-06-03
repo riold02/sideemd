@@ -25,7 +25,7 @@ export default function TrackingSettingsView({ settings, onUpdate }: Props) {
           checked={settings.enabled}
           onChange={(event) => void onUpdate({ enabled: event.target.checked })}
         />
-        Research tracking
+        Session tracking
       </label>
       <button
         className="pause-button"
@@ -38,7 +38,7 @@ export default function TrackingSettingsView({ settings, onUpdate }: Props) {
         Allowed domains
         <textarea
           aria-label="Allowed tracking domains"
-          placeholder="Leave blank to track all allowed page visits"
+          placeholder="Leave blank to track all browser page visits"
           value={settings.allowedDomains.join('\n')}
           onChange={(event) =>
             void onUpdate({
@@ -67,7 +67,7 @@ export default function TrackingSettingsView({ settings, onUpdate }: Props) {
             void onUpdate({ blockSensitivePages: event.target.checked })
           }
         />
-        Block login, payment, banking, email, and other chat pages
+        Block login, payment, banking, email, and other sensitive pages
       </label>
     </main>
   );

@@ -380,7 +380,7 @@ export function useSidepanelState(repository: StorageRepository) {
   }
 
   async function handleClearResearchLogs() {
-    if (!window.confirm('Delete all research logs?')) return;
+    if (!window.confirm('Delete all session tracking entries?')) return;
     await repository.clearResearchLogs();
     await refreshState();
   }
@@ -413,7 +413,7 @@ export function useSidepanelState(repository: StorageRepository) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `sideemd-research-${new Date().toISOString().slice(0, 10)}.${format}`;
+    anchor.download = `sideemd-session-tracking-${new Date().toISOString().slice(0, 10)}.${format}`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -434,7 +434,7 @@ export function useSidepanelState(repository: StorageRepository) {
           'tracking.updated',
           'tracking',
           'settings',
-          'Research tracking'
+          'Session tracking'
         )
       )
     );

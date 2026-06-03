@@ -23,11 +23,10 @@ interface Props {
   onTextColor: (color: string) => void;
   onBackgroundColor: (color: string) => void;
   onCreateSubnote?: () => void;
-  onOpenWikilinkMenu?: () => void;
 }
 
 const sectionOrder = [
-  'Subpages',
+  'Pages',
   'Text Style',
   'Basic Text',
   'Lists',
@@ -42,7 +41,6 @@ export default function QuickInsertMenu({
   onTextColor,
   onBackgroundColor,
   onCreateSubnote,
-  onOpenWikilinkMenu,
 }: Props) {
   const allOptions: Array<
     | { kind: 'format'; option: FormatOption }
@@ -55,31 +53,17 @@ export default function QuickInsertMenu({
   return (
     <div className="block-insert-menu" role="menu">
       {sectionOrder.map((section) => {
-        if (section === 'Subpages') {
-          if (!onCreateSubnote && !onOpenWikilinkMenu) return null;
+        if (section === 'Pages') {
+          if (!onCreateSubnote) return null;
           return (
             <div className="block-insert-group" key={section}>
               <div className="block-insert-group-title">{section}</div>
-              {onCreateSubnote ? (
-                <button type="button" onClick={onCreateSubnote} role="menuitem">
-                  <span className="block-option-icon" aria-hidden>
-                    +
-                  </span>
-                  <span>Create subpage</span>
-                </button>
-              ) : null}
-              {onOpenWikilinkMenu ? (
-                <button
-                  type="button"
-                  onClick={onOpenWikilinkMenu}
-                  role="menuitem"
-                >
-                  <span className="block-option-icon" aria-hidden>
-                    ↗
-                  </span>
-                  <span>Link to subpage</span>
-                </button>
-              ) : null}
+              <button type="button" onClick={onCreateSubnote} role="menuitem">
+                <span className="block-option-icon" aria-hidden>
+                  +
+                </span>
+                <span>Create Page</span>
+              </button>
             </div>
           );
         }

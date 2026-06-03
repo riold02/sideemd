@@ -190,7 +190,7 @@ export function useEditorBlockInsert({
   async function createSubnoteAtCurrentBlock() {
     if (!selectedNote || !blockInsertTarget) return;
 
-    const requestedTitle = window.prompt('Subpage title', '');
+    const requestedTitle = window.prompt('Page title', '');
     if (requestedTitle === null) {
       closeQuickMenu();
       return;

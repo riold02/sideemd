@@ -55,16 +55,16 @@ export default function DashboardView({ state, onOpenView }: Props) {
         <article className="dashboard-stat-card">
           <FlaskConical size={17} />
           <strong>{todayLogs.length}</strong>
-          <span>Research today</span>
+          <span>Tracked today</span>
         </article>
         <article className="dashboard-stat-card dashboard-summary-card">
-          <span>Top website</span>
+          <span>Top site</span>
           <strong>
             {topWebsite ? `${topWebsite[0]} (${topWebsite[1]})` : '-'}
           </strong>
         </article>
         <article className="dashboard-stat-card dashboard-summary-card">
-          <span>Top keyword</span>
+          <span>Top page</span>
           <strong>
             {topKeyword ? `${topKeyword[0]} (${topKeyword[1]})` : '-'}
           </strong>
@@ -83,7 +83,7 @@ export default function DashboardView({ state, onOpenView }: Props) {
               tab: HOME_TAB,
             },
             {
-              label: 'Research',
+              label: 'Session Tracking',
               icon: FlaskConical,
               tab: RESEARCH_TAB,
             },

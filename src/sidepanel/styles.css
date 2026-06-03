@@ -12,6 +12,7 @@ body,
 #root {
   margin: 0;
   height: 100%;
+  min-height: 100vh;
 }
 
 body {
@@ -34,7 +35,7 @@ label {
   display: grid;
   grid-template-rows: auto 1fr;
   height: 100%;
-  min-height: 0;
+  min-height: 100vh;
 }
 
 .tabline {
@@ -813,8 +814,11 @@ button,
 }
 
 .editor-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   padding: 14px;
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -1041,9 +1045,48 @@ button,
   gap: 7px;
 }
 
-.research-list li {
+.tracking-day {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.tracking-day h3 {
+  margin: 8px 0 0;
+  color: #3d4856;
+  font:
+    700 12px/1.2 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.tracking-session {
+  display: grid;
+  gap: 7px;
+}
+
+.tracking-session > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #566475;
+  font:
+    12px/1.3 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.tracking-session ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tracking-session li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 3px 8px;
   border: 1px solid #d2dae4;
   border-radius: 8px;
@@ -1053,15 +1096,41 @@ button,
 
 .research-list p,
 .research-list strong,
+.research-list a,
 .research-list time,
 .research-list span {
-  grid-column: 1;
   margin: 0;
   overflow-wrap: anywhere;
 }
 
-.research-list button {
+.tracking-session li > time {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  min-width: 42px;
+}
+
+.tracking-session li > strong,
+.tracking-session li > span,
+.tracking-session li > a,
+.tracking-session li > p {
   grid-column: 2;
+}
+
+.tracking-session li > a {
+  color: #245f9f;
+  font:
+    12px/1.35 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  text-decoration: none;
+}
+
+.tracking-session li > a:hover {
+  text-decoration: underline;
+}
+
+.research-list button {
+  grid-column: 3;
   grid-row: 1;
 }
 
@@ -1151,20 +1220,36 @@ button,
 
 .visual-editor-shell {
   position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   margin-top: 12px;
   border: 1px solid #c2cad3;
   background: rgba(255, 255, 255, 0.87);
   border-radius: 12px;
   overflow: visible;
+  min-height: 0;
 }
 
 .visual-editor {
-  height: auto;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
   background: transparent;
 }
 
+.visual-editor > div,
+.visual-editor [class*='_rootContentEditableWrapper_'] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .visual-editor-content {
-  min-height: 240px;
+  flex: 1 1 auto;
+  min-height: 100%;
   padding: 16px;
   font:
     15px/1.62 'Iowan Old Style',
