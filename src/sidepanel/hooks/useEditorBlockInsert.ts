@@ -47,6 +47,7 @@ export function useEditorBlockInsert({
   const [blockInsertTarget, setBlockInsertTarget] = useState<{
     top: number;
     signature: string;
+    placeAbove: boolean;
   } | null>(null);
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
   const isBlockMenuOpenRef = useRef(isBlockMenuOpen);
@@ -72,6 +73,17 @@ export function useEditorBlockInsert({
     };
   }, [isBlockMenuOpen]);
 
+  function resolveMenuPlacement(shell: HTMLDivElement, top: number) {
+    const estimatedMenuHeight = 320;
+    const gapFromButton = 34;
+    const availableBelow = shell.clientHeight - top;
+    const availableAbove = top;
+    return (
+      availableBelow < estimatedMenuHeight + gapFromButton &&
+      availableAbove > availableBelow
+    );
+  }
+
   const openQuickMenuFromElement = useCallback(
     (targetElement: Element): boolean => {
       const shell = editorShellRef.current;
@@ -93,9 +105,11 @@ export function useEditorBlockInsert({
 
       const shellRect = shell.getBoundingClientRect();
       const anchorRect = hoverTarget.anchor.getBoundingClientRect();
+      const top = anchorRect.top - shellRect.top + anchorRect.height / 2;
       setBlockInsertTarget({
-        top: anchorRect.top - shellRect.top + anchorRect.height / 2,
+        top,
         signature: hoverTarget.signature,
+        placeAbove: resolveMenuPlacement(shell, top),
       });
       setIsBlockMenuOpen(true);
       return true;
@@ -141,9 +155,11 @@ export function useEditorBlockInsert({
     }
     const shellRect = shell.getBoundingClientRect();
     const anchorRect = hoverTarget.anchor.getBoundingClientRect();
+    const top = anchorRect.top - shellRect.top + anchorRect.height / 2;
     setBlockInsertTarget({
-      top: anchorRect.top - shellRect.top + anchorRect.height / 2,
+      top,
       signature: hoverTarget.signature,
+      placeAbove: resolveMenuPlacement(shell, top),
     });
   }
 

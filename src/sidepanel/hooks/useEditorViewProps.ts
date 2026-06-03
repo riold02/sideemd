@@ -16,7 +16,11 @@ interface Params {
   notebookName: string;
   selectedNoteAncestors: Note[];
   isBlockMenuOpen: boolean;
-  blockInsertTarget: { top: number; signature: string } | null;
+  blockInsertTarget: {
+    top: number;
+    signature: string;
+    placeAbove: boolean;
+  } | null;
   selectionToolbar: { top: number; left: number } | null;
   wikilinkMenu: EditorViewState['wikilinkMenu'];
   error: string;

@@ -23,6 +23,7 @@ interface Props {
   onTextColor: (color: string) => void;
   onBackgroundColor: (color: string) => void;
   onCreateSubnote?: () => void;
+  placement?: 'above' | 'below';
 }
 
 const sectionOrder = [
@@ -41,6 +42,7 @@ export default function QuickInsertMenu({
   onTextColor,
   onBackgroundColor,
   onCreateSubnote,
+  placement = 'below',
 }: Props) {
   const allOptions: Array<
     | { kind: 'format'; option: FormatOption }
@@ -51,7 +53,10 @@ export default function QuickInsertMenu({
   ];
 
   return (
-    <div className="block-insert-menu" role="menu">
+    <div
+      className={`block-insert-menu ${placement === 'above' ? 'is-above' : ''}`.trim()}
+      role="menu"
+    >
       {sectionOrder.map((section) => {
         if (section === 'Pages') {
           if (!onCreateSubnote) return null;

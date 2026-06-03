@@ -21,20 +21,24 @@ describe('App editor', () => {
   });
 
   async function openNotes() {
-    fireEvent.click(await screen.findByRole('button', { name: 'Notes' }));
+    const buttons = await screen.findAllByRole('button', { name: 'Notes' });
+    fireEvent.click(buttons[0]);
   }
 
   async function openResearch() {
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Session Tracking' })
-    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Dashboard' }));
+    const buttons = await screen.findAllByRole('button', {
+      name: 'Session Tracking',
+    });
+    fireEvent.click(buttons[0]);
   }
 
   async function openSettings() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Dashboard' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
   }
 
-  it('renders dashboard then opens the notes browser', async () => {
+  it('renders notes first and still allows opening dashboard', async () => {
     const { chrome } = createChromeStorageMock();
     vi.stubGlobal('chrome', chrome);
 
@@ -42,8 +46,12 @@ describe('App editor', () => {
     render(<App />);
 
     expect(
-      await screen.findByRole('button', { name: 'Dashboard' })
+      await screen.findByRole('button', { name: 'Notes' })
     ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Dashboard' })
+    );
     expect(
       screen.getByRole('heading', { name: 'Dashboard' })
     ).toBeInTheDocument();
@@ -54,7 +62,7 @@ describe('App editor', () => {
     expect(
       screen.getByRole('button', { name: 'Open note actions' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Note' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Page' })).toBeInTheDocument();
     expect(
       screen.queryByLabelText('Visual markdown editor')
     ).not.toBeInTheDocument();
@@ -169,6 +177,34 @@ describe('App editor', () => {
     await openNotes();
     expect(
       await screen.findByRole('button', { name: 'Delete Welcome' })
+    ).toBeInTheDocument();
+  });
+
+  it('filters notes by pinned and favorite scopes', async () => {
+    const { chrome, store } = createChromeStorageMock();
+    vi.stubGlobal('chrome', chrome);
+
+    const { default: App } = await import('../sidepanel/App');
+    render(<App />);
+
+    await openNotes();
+    fireEvent.click(await screen.findByRole('button', { name: 'Pin Welcome' }));
+
+    await waitFor(() => {
+      const state = store[STORAGE_KEY] as AppState;
+      expect(
+        Object.values(state.notes).find((note) => note.title === 'Welcome')?.pinned
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show pinned pages' }));
+    expect(
+      await screen.findByRole('button', { name: 'Open Welcome' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show favorite pages' }));
+    expect(
+      await screen.findByText('No pages match the current filters.')
     ).toBeInTheDocument();
   });
 

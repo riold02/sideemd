@@ -1,5 +1,5 @@
-import { LayoutDashboard, X } from 'lucide-react';
-import { DASHBOARD_TAB } from '../editorConfig';
+import { FileText, LayoutDashboard, X } from 'lucide-react';
+import { DASHBOARD_TAB, HOME_TAB } from '../editorConfig';
 import type { TablineActions, TablineState } from '../types';
 
 interface Props {
@@ -20,6 +20,7 @@ export default function Tabline({ state, actions }: Props) {
   return (
     <nav className="tabline" aria-label="Open notes">
       {[
+        { id: HOME_TAB, label: 'Notes', icon: FileText },
         { id: DASHBOARD_TAB, label: 'Dashboard', icon: LayoutDashboard },
       ].map(({ id, label, icon: Icon }) => (
         <button

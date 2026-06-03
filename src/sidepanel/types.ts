@@ -83,7 +83,11 @@ export interface EditorViewState {
   notebookName: string;
   noteAncestors: Note[];
   isBlockMenuOpen: boolean;
-  blockInsertTarget: { top: number; signature: string } | null;
+  blockInsertTarget: {
+    top: number;
+    signature: string;
+    placeAbove: boolean;
+  } | null;
   selectionToolbar: { top: number; left: number } | null;
   wikilinkMenu: {
     top: number;
@@ -105,7 +109,11 @@ export interface EditorViewActions {
   handleEditorMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
   setIsBlockMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setBlockInsertTarget: React.Dispatch<
-    React.SetStateAction<{ top: number; signature: string } | null>
+    React.SetStateAction<{
+      top: number;
+      signature: string;
+      placeAbove: boolean;
+    } | null>
   >;
   insertBlockBelowCurrentTarget: (md: string) => void;
   applyQuickFormatFromMenu: (format: QuickFormat) => void;

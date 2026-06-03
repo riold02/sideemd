@@ -71,13 +71,16 @@ export default function EditorView({ state, actions, config }: Props) {
     <main className="editor-area">
       {selectedNote ? (
         <>
-          <NoteBreadcrumb
-            notebookName={notebookName}
-            ancestors={noteAncestors}
-            currentTitle={selectedNote.title}
-            onHomeClick={onHomeClick}
-            onOpenNote={openNoteTab}
-          />
+          <div className="editor-topbar">
+            <NoteBreadcrumb
+              notebookName={notebookName}
+              ancestors={noteAncestors}
+              currentTitle={selectedNote.title}
+              onHomeClick={onHomeClick}
+              onOpenNote={openNoteTab}
+            />
+            <span className="editor-status">Autosaves while you type</span>
+          </div>
 
           <div
             className="visual-editor-shell"
@@ -123,6 +126,7 @@ export default function EditorView({ state, actions, config }: Props) {
                 </button>
                 {isBlockMenuOpen ? (
                   <QuickInsertMenu
+                    placement={blockInsertTarget.placeAbove ? 'above' : 'below'}
                     blockOptions={blockInsertOptions}
                     formatOptions={formatOptions}
                     onInsertBlock={insertBlockBelowCurrentTarget}
